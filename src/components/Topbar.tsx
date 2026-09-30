@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icons";
 import { LanguageDropdown } from "./LanguageDropdown";
+import { GlobalCopilot } from "./GlobalCopilot";
 import { useDashboardData } from "../services/api";
 import type { Language } from "../types";
 
@@ -26,6 +27,9 @@ export interface TopbarProps {
   fallbackBrandName?: string;
   fallbackLogoUrl?: string | null;
   fallbackLogoHeight?: number;
+  onOpenCopilot?: () => void;
+  isCopilotOpen?: boolean;
+  onCloseCopilot?: () => void;
 }
 
 export function UserProfileDropdown({
@@ -118,7 +122,18 @@ export function Topbar({
   fallbackBrandName,
   fallbackLogoUrl,
   fallbackLogoHeight = 32,
+  onOpenCopilot,
+  isCopilotOpen: propsIsCopilotOpen,
+  onCloseCopilot,
 }: TopbarProps) {
+  const [internalCopilotOpen, setInternalCopilotOpen] = useState(false);
+  const isCopilotOpen = propsIsCopilotOpen ?? internalCopilotOpen;
+  const setIsCopilotOpen = (val: boolean) => {
+    setInternalCopilotOpen(val);
+    if (val && onOpenCopilot) onOpenCopilot();
+    if (!val && onCloseCopilot) onCloseCopilot();
+  };
+
   const { settings, records } = useDashboardData();
 
   // Read dynamic branding from IndexedDB settings (reactive via useLiveQuery in useDashboardData)
@@ -247,8 +262,40 @@ export function Topbar({
           <Icon name="settings" size={17} />
         </button>
 
+        {/* Distinct Global AI Copilot Pill Trigger */}
+        <button
+          type="button"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-info/10 text-brand-info font-medium border border-brand-info/20 hover:bg-brand-info/20 transition-colors global-copilot-pill-btn"
+          title="Open Enterprise AI Copilot"
+          aria-label="Open Enterprise AI Copilot"
+          onClick={() => setIsCopilotOpen(true)}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "5px 12px",
+            borderRadius: "9999px",
+            background: "color-mix(in srgb, var(--primary) 12%, var(--surface))",
+            color: "var(--primary)",
+            border: "1px solid color-mix(in srgb, var(--primary) 28%, transparent)",
+            fontSize: "12px",
+            fontWeight: 700,
+            cursor: "pointer",
+            transition: "all 0.18s ease",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
+          }}
+        >
+          <span style={{ fontSize: "13px" }}>✨</span>
+          <span>Copilot</span>
+        </button>
+
         <UserProfileDropdown t={t} onLogout={onLogout} />
       </div>
+
+      {/* Fallback Global Drawer if not handled at root layout */}
+      {!onOpenCopilot && (
+        <GlobalCopilot isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
+      )}
     </header>
   );
 }

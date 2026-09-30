@@ -1,8 +1,9 @@
-import { useState, useRef, type ChangeEvent } from "react";
+import { useState, useRef, type ChangeEvent, type DragEvent } from "react";
 import { Icon, type IconName } from "./Icons";
 import { LANGUAGES } from "./LanguageDropdown";
 import { Pill, StatusDot } from "./Tiles";
 import type { Language, ShadowIntensity } from "../types";
+import { ingestDatasetFile, processUploadedJSON } from "../lib/ingestion";
 
 export type StudioTab =
   | "brand"
@@ -66,6 +67,7 @@ export interface StudioProps {
 
   // Storage & Backup
   recordsCount: number;
+  emailsCount?: number;
   sourcesCount: number;
   pendingSyncCount: number;
   onTriggerSync: () => void;
@@ -78,6 +80,7 @@ export interface StudioProps {
   onOpenStaging: () => void;
   pendingStagingCount: number;
   importStatus: string;
+  onFileIngested?: (message: string) => void;
 
   // General
   onResetDefaults: () => void;
@@ -118,6 +121,7 @@ export function Studio({
   language,
   onLanguageChange,
   recordsCount,
+  emailsCount = 0,
   sourcesCount,
   pendingSyncCount,
   onTriggerSync,
@@ -128,11 +132,58 @@ export function Studio({
   onOpenStaging,
   pendingStagingCount,
   importStatus,
+  onFileIngested,
   onResetDefaults,
   t,
 }: StudioProps) {
   const [activeTab, setActiveTab] = useState<StudioTab>("brand");
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const dataFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Ingestion drag-drop and staging states
+  const [isDragging, setIsDragging] = useState(false);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
+  const [localImportMessage, setLocalImportMessage] = useState<string | null>(null);
+  const [isStagingModalOpen, setIsStagingModalOpen] = useState(false);
+
+  const totalRecords = recordsCount + emailsCount;
+
+  const handleProcessFile = async (file: File) => {
+    setIsProcessingFile(true);
+    setLocalImportMessage(`Reading ${file.name}...`);
+    try {
+      let resMessage = "";
+      if (file.name.toLowerCase().endsWith(".json")) {
+        const res = await processUploadedJSON(file);
+        resMessage = res.message;
+      } else {
+        const res = await ingestDatasetFile(file);
+        resMessage = res.message;
+      }
+      setLocalImportMessage(resMessage);
+      if (onFileIngested) {
+        onFileIngested(resMessage);
+      }
+      alert(resMessage);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "Error processing file";
+      setLocalImportMessage(errMsg);
+      alert(`Import error: ${errMsg}`);
+    } finally {
+      setIsProcessingFile(false);
+    }
+  };
+
+  const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      for (const file of Array.from(files)) {
+        await handleProcessFile(file);
+      }
+    }
+  };
 
   const tabs: TabItem[] = [
     { id: "brand", label: t("studio.tabs.brand") || "Brand & Identity", icon: "zap", emoji: "🏷️" },
@@ -735,8 +786,8 @@ export function Studio({
 
             <div className="storage-stats" style={{ maxWidth: "560px", marginTop: "8px" }}>
               <div>
-                <span>{t("records") || "Records"}</span>
-                <strong>{recordsCount.toLocaleString()}</strong>
+                <span>{t("records") || "Total Records"}</span>
+                <strong>{totalRecords.toLocaleString()}</strong>
               </div>
               <div>
                 <span>{t("source") || "Files"}</span>
@@ -784,43 +835,238 @@ export function Studio({
             <div className="studio-pane-header">
               <div>
                 <h2>{t("studio.tabs.ingestion") || "Ingestion Studio & Smart Inbox"}</h2>
-                <p>Parse local CSV, XLSX, PDF, and DOCX files into IndexedDB with automated categorization.</p>
+                <p>
+                  Import your JSON datasets, emails, or business spreadsheets directly into offline Dexie IndexedDB.
+                </p>
               </div>
             </div>
 
             <div style={{ maxWidth: "560px" }}>
-              <button
-                type="button"
-                className="drop-zone mini-drop"
-                onClick={onOpenImport}
-              >
-                <Icon name="plus" size={18} />
-                <span>{t("import") || "Import Data File"}</span>
-                <small>{t("supported") || "Excel, CSV, PDF, Word documents"}</small>
-              </button>
+              <input
+                ref={dataFileInputRef}
+                type="file"
+                multiple
+                accept=".json,.csv,.xlsx,.xls,.pdf,.docx,.txt"
+                style={{ display: "none" }}
+                onChange={async (e) => {
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    for (const file of Array.from(files)) {
+                      await handleProcessFile(file);
+                    }
+                    e.target.value = "";
+                  }
+                }}
+              />
 
+              {/* Functional Drag-and-Drop Ingestion Zone */}
+              <div
+                className={`drop-zone mini-drop ${isDragging ? "dragging" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => dataFileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                style={{ cursor: "pointer", transition: "all 0.2s ease" }}
+              >
+                <Icon name="upload" size={22} />
+                <strong>{t("import") || "Import Data File (.json, .csv, .xlsx)"}</strong>
+                <small>
+                  {isProcessingFile
+                    ? "Reading and parsing file contents locally..."
+                    : isDragging
+                    ? "Drop file to ingest into Dexie now!"
+                    : "Drag & drop .json, .csv, or spreadsheets here, or click to browse"}
+                </small>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+                <button
+                  type="button"
+                  className="breadcrumb"
+                  onClick={onOpenImport}
+                  style={{ fontSize: "11px", margin: 0, padding: 0, gap: "5px", cursor: "pointer" }}
+                  title="Open batch modal importer"
+                >
+                  <Icon name="upload" size={12} />
+                  <span>{t("common.advancedImport") || "Open batch file modal"}</span>
+                </button>
+              </div>
+
+              {/* Smart Staging Pipeline Action Button */}
               <div style={{ marginTop: "14px" }}>
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={onOpenStaging}
+                  onClick={() => {
+                    setIsStagingModalOpen(true);
+                    onOpenStaging?.();
+                  }}
                   style={{ width: "100%", justifyContent: "center", padding: "10px 16px" }}
                 >
                   <Icon name="shield" size={15} />
-                  <span>{t("staging.title") || "Smart Staging Inbox"}</span>
-                  {pendingStagingCount > 0 && (
+                  <span>{t("staging.title") || "Bandeja Smart Staging"}</span>
+                  {pendingStagingCount > 0 ? (
                     <Pill label={`${pendingStagingCount} ${t("status.pending") || "pending"}`} tone="warn" />
+                  ) : (
+                    <span className="inbox-task-done-badge" style={{ marginLeft: "6px" }}>0 Pending</span>
                   )}
                 </button>
               </div>
 
-              {importStatus && (
+              {/* Ingestion Status Notification Feedback */}
+              {(localImportMessage || importStatus) && (
                 <div className="status-message" style={{ marginTop: "14px" }}>
                   <StatusDot status="healthy" />
-                  <span>{importStatus}</span>
+                  <span>{localImportMessage || importStatus}</span>
                 </div>
               )}
+
+              {/* Reactive Total Records Counter Card (Datasets + Emails) */}
+              <div
+                className="studio-record-counter-card"
+                style={{
+                  marginTop: "18px",
+                  padding: "16px 18px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  borderRadius: "var(--radius-card, 12px)",
+                  boxShadow: "var(--card-shadow)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "8px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      color: "var(--muted)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    ⚡ Dexie IndexedDB Store
+                  </span>
+                  <span className="status-dot healthy" title="Local IndexedDB Active" />
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+                  <strong
+                    style={{
+                      fontSize: "26px",
+                      fontWeight: 850,
+                      color: "var(--ink)",
+                      letterSpacing: "-0.04em",
+                    }}
+                  >
+                    {totalRecords.toLocaleString()}
+                  </strong>
+                  <span style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 600 }}>
+                    {t("records") || "total records"}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "16px",
+                    marginTop: "10px",
+                    paddingTop: "10px",
+                    borderTop: "1px solid var(--line)",
+                    fontSize: "11px",
+                    color: "var(--muted)",
+                  }}
+                >
+                  <span>
+                    📊 <strong>{recordsCount.toLocaleString()}</strong> {t("common.datasets") || "datasets"}
+                  </span>
+                  <span>
+                    📩 <strong>{emailsCount.toLocaleString()}</strong> {t("common.emails") || "emails"}
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {/* Smart Staging Interactive Pipeline Modal */}
+            {isStagingModalOpen && (
+              <div
+                className="modal-backdrop"
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) setIsStagingModalOpen(false);
+                }}
+              >
+                <div
+                  className="modal staging-modal"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--line)",
+                    borderRadius: "var(--radius-card, 14px)",
+                    padding: "24px",
+                    maxWidth: "540px",
+                    width: "90%",
+                    boxShadow: "0 20px 40px -10px rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "16px" }}>
+                    <div>
+                      <div className="eyebrow" style={{ fontSize: "10px", color: "var(--muted)", fontWeight: 800 }}>
+                        PIPELINE / LOCAL STAGING QUEUE
+                      </div>
+                      <h3 style={{ margin: "4px 0 0", fontSize: "18px", fontWeight: 800, color: "var(--ink)" }}>
+                        {t("staging.title") || "Bandeja Smart Staging"}
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={() => setIsStagingModalOpen(false)}
+                      title="Close staging view"
+                    >
+                      <Icon name="close" size={14} />
+                    </button>
+                  </div>
+
+                  <p style={{ fontSize: "12px", color: "var(--muted)", lineHeight: 1.5, margin: "0 0 16px" }}>
+                    {pendingStagingCount > 0
+                      ? `${pendingStagingCount} incoming dataset batches are staged and waiting for confidence verification before merging into live telemetry.`
+                      : "Staging pipeline is completely clean. When external documents or unverified batches are uploaded, they queue here for automated confidence categorization."}
+                  </p>
+
+                  <div style={{ padding: "14px", background: "var(--surface-alt)", borderRadius: "8px", border: "1px solid var(--line)", fontSize: "11px", color: "var(--text-main)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <span>Ingestion Gateway Status:</span>
+                      <strong style={{ color: "var(--primary)" }}>Active (Zero-Cloud / Local Edge)</strong>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <span>IndexedDB Active Tables:</span>
+                      <span><code>data_entries</code>, <code>emails</code>, <code>action_queue</code></span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Pending Queue Batches:</span>
+                      <strong>{pendingStagingCount} items</strong>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "20px" }}>
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={() => setIsStagingModalOpen(false)}
+                    >
+                      <span>Close</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         )}
       </main>

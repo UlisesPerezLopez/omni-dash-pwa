@@ -10,6 +10,7 @@ export interface LocaleSchema {
     hr: string;
     quality: string;
     studio: string;
+    inbox: string;
     allTagline: string;
     salesTagline: string;
     purchasingTagline: string;
@@ -18,6 +19,7 @@ export interface LocaleSchema {
     hrTagline: string;
     qualityTagline: string;
     studioTagline: string;
+    inboxTagline: string;
   };
   kpis: {
     revenue: string;
@@ -244,6 +246,35 @@ export interface LocaleSchema {
     searchNavigation: string;
     noResults: string;
     searchHint: string;
+    inboxTitle: string;
+    inboxFolders: string;
+    folderInbox: string;
+    folderSent: string;
+    folderArchive: string;
+    folderTrash: string;
+    unreadOnly: string;
+    allEmails: string;
+    searchEmailsPlaceholder: string;
+    noEmailsFound: string;
+    selectEmailPrompt: string;
+    aiAnalysisTitle: string;
+    aiSummary: string;
+    extractedTasks: string;
+    deadlineLabel: string;
+    priorityHigh: string;
+    priorityMedium: string;
+    priorityLow: string;
+    markAsRead: string;
+    markAsUnread: string;
+    moveToArchive: string;
+    moveToTrash: string;
+    moveToInbox: string;
+    simulateEmail: string;
+    taskDone: string;
+    advancedImport: string;
+    datasets: string;
+    emails: string;
+    askAi: string;
   };
 }
 
@@ -258,6 +289,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hr: "Human Resources",
       quality: "Quality Management",
       studio: "Studio & Settings",
+      inbox: "Inbox",
       allTagline: "Cross-functional command view with the live priority queue.",
       salesTagline: "Quotes, closed orders and churn signals from commercial activity.",
       purchasingTagline: "Vendor spend, approvals and contract health.",
@@ -266,6 +298,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hrTagline: "Headcount, retention and review workflow.",
       qualityTagline: "SLA compliance, escalations and quality gates.",
       studioTagline: "Tune the experience, protect the workspace and keep every workflow on-device.",
+      inboxTagline: "Enterprise email comms with local AI analysis and task extraction.",
     },
     kpis: {
       revenue: "Revenue",
@@ -492,6 +525,35 @@ export const locales: Record<Language, LocaleSchema> = {
       searchNavigation: "Navigation",
       noResults: "No results found",
       searchHint: "Press Esc to close, ↑ ↓ to navigate",
+      inboxTitle: "Enterprise Inbox",
+      inboxFolders: "Folders",
+      folderInbox: "Inbox",
+      folderSent: "Sent",
+      folderArchive: "Archive",
+      folderTrash: "Trash",
+      unreadOnly: "Unread Only",
+      allEmails: "All Messages",
+      searchEmailsPlaceholder: "Search sender, subject or body...",
+      noEmailsFound: "No messages found in this folder.",
+      selectEmailPrompt: "Select a message from the list to view its contents and AI insights.",
+      aiAnalysisTitle: "✨ AI Analysis & Insights",
+      aiSummary: "TL;DR Summary",
+      extractedTasks: "Actionable Extracted Tasks",
+      deadlineLabel: "Response Deadline",
+      priorityHigh: "High Priority",
+      priorityMedium: "Medium Priority",
+      priorityLow: "Low Priority",
+      markAsRead: "Mark as Read",
+      markAsUnread: "Mark as Unread",
+      moveToArchive: "Archive",
+      moveToTrash: "Delete",
+      moveToInbox: "Move to Inbox",
+      simulateEmail: "Simulate Incoming Email",
+      taskDone: "Completed",
+      advancedImport: "Advanced import options",
+      datasets: "Data Records",
+      emails: "Emails",
+      askAi: "Ask AI...",
     },
   },
 
@@ -505,6 +567,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hr: "Recursos Humanos",
       quality: "Gestión de Calidad",
       studio: "Estudio y Ajustes",
+      inbox: "Bandeja de Entrada",
       allTagline: "Comando interfuncional con cola operativa en tiempo real.",
       salesTagline: "Cotizaciones, pedidos cerrados y señales de retención comercial.",
       purchasingTagline: "Gasto de proveedores, aprobaciones y salud contractual.",
@@ -513,6 +576,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hrTagline: "Plantilla, retención y ciclo de evaluaciones.",
       qualityTagline: "Cumplimiento de SLA, escalaciones y control de calidad.",
       studioTagline: "Personaliza la experiencia y procesa todo en el dispositivo.",
+      inboxTagline: "Comunicaciones corporativas con análisis de IA local y tareas.",
     },
     kpis: {
       revenue: "Ingresos",
@@ -739,6 +803,35 @@ export const locales: Record<Language, LocaleSchema> = {
       searchNavigation: "Navegación",
       noResults: "No se encontraron resultados",
       searchHint: "Presiona Esc para cerrar, ↑ ↓ para navegar",
+      inboxTitle: "Bandeja Corporativa",
+      inboxFolders: "Carpetas",
+      folderInbox: "Recibidos",
+      folderSent: "Enviados",
+      folderArchive: "Archivados",
+      folderTrash: "Papelera",
+      unreadOnly: "Solo no leídos",
+      allEmails: "Todos los mensajes",
+      searchEmailsPlaceholder: "Buscar remitente, asunto o contenido...",
+      noEmailsFound: "No se encontraron mensajes en esta carpeta.",
+      selectEmailPrompt: "Seleccione un mensaje de la lista para ver su contenido y el análisis de IA.",
+      aiAnalysisTitle: "✨ Análisis de IA & Insights",
+      aiSummary: "Resumen Ejecutivo",
+      extractedTasks: "Tareas Extraídas Accionables",
+      deadlineLabel: "Fecha Límite",
+      priorityHigh: "Prioridad Alta",
+      priorityMedium: "Prioridad Media",
+      priorityLow: "Prioridad Baja",
+      markAsRead: "Marcar como leído",
+      markAsUnread: "Marcar como no leído",
+      moveToArchive: "Archivar",
+      moveToTrash: "Eliminar",
+      moveToInbox: "Mover a Recibidos",
+      simulateEmail: "Simular correo entrante",
+      taskDone: "Completado",
+      advancedImport: "Opciones avanzadas de importación",
+      datasets: "Registros de Datos",
+      emails: "Correos Electrónicos",
+      askAi: "Preguntar a la IA...",
     },
   },
 
@@ -752,6 +845,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hr: "Personalwesen",
       quality: "Qualitätsmanagement",
       studio: "Studio & Einstellungen",
+      inbox: "Posteingang",
       allTagline: "Bereichsübergreifende Übersicht mit operativer Prioritätenliste.",
       salesTagline: "Angebote, Aufträge und Abwanderungssignale aus dem Vertrieb.",
       purchasingTagline: "Lieferantenausgaben, Freigaben und Vertragsstatus.",
@@ -760,6 +854,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hrTagline: "Mitarbeiterbestand, Fluktuation und Beurteilungszyklen.",
       qualityTagline: "SLA-Erfüllung, Eskalationen und Qualitätsprüfungen.",
       studioTagline: "Arbeitsbereich anpassen und Daten lokal verarbeiten.",
+      inboxTagline: "Enterprise E-Mail-Kommunikation mit lokaler KI-Analyse und Aufgaben.",
     },
     kpis: {
       revenue: "Umsatz",
@@ -986,6 +1081,35 @@ export const locales: Record<Language, LocaleSchema> = {
       searchNavigation: "Navigation",
       noResults: "Keine Ergebnisse gefunden",
       searchHint: "Esc zum Schließen, ↑ ↓ zum Navigieren",
+      inboxTitle: "Enterprise Posteingang",
+      inboxFolders: "Ordner",
+      folderInbox: "Posteingang",
+      folderSent: "Gesendet",
+      folderArchive: "Archiv",
+      folderTrash: "Papierkorb",
+      unreadOnly: "Nur ungelesen",
+      allEmails: "Alle Nachrichten",
+      searchEmailsPlaceholder: "Absender, Betreff oder Inhalt suchen...",
+      noEmailsFound: "Keine Nachrichten in diesem Ordner gefunden.",
+      selectEmailPrompt: "Wählen Sie eine Nachricht aus der Liste, um Inhalte und KI-Analysen anzuzeigen.",
+      aiAnalysisTitle: "✨ KI-Analyse & Insights",
+      aiSummary: "Management-Zusammenfassung",
+      extractedTasks: "Extrahierte Handlungsaufgaben",
+      deadlineLabel: "Antwortfrist",
+      priorityHigh: "Hohe Priorität",
+      priorityMedium: "Mittlere Priorität",
+      priorityLow: "Niedrige Priorität",
+      markAsRead: "Als gelesen markieren",
+      markAsUnread: "Als ungelesen markieren",
+      moveToArchive: "Archivieren",
+      moveToTrash: "Löschen",
+      moveToInbox: "In Posteingang verschieben",
+      simulateEmail: "Eingehende E-Mail simulieren",
+      taskDone: "Erledigt",
+      advancedImport: "Erweiterte Importoptionen",
+      datasets: "Datensätze",
+      emails: "E-Mails",
+      askAi: "KI fragen...",
     },
   },
 
@@ -999,6 +1123,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hr: "Ressources Humaines",
       quality: "Gestion Qualité",
       studio: "Studio & Réglages",
+      inbox: "Boîte de réception",
       allTagline: "Pilotage transverse avec file de priorités en temps réel.",
       salesTagline: "Devis, commandes closes et signaux de rétention commerciale.",
       purchasingTagline: "Dépenses fournisseurs, validations et état des contrats.",
@@ -1007,6 +1132,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hrTagline: "Effectifs, rétention et flux des entretiens d'évaluation.",
       qualityTagline: "Conformité SLA, escalades et portes qualité.",
       studioTagline: "Personnalisez l'espace et traitez toutes les données en local.",
+      inboxTagline: "Communications d'entreprise avec analyse IA locale et tâches.",
     },
     kpis: {
       revenue: "Revenus",
@@ -1233,6 +1359,35 @@ export const locales: Record<Language, LocaleSchema> = {
       searchNavigation: "Navigation",
       noResults: "Aucun résultat trouvé",
       searchHint: "Échap pour fermer, ↑ ↓ pour naviguer",
+      inboxTitle: "Messagerie d'entreprise",
+      inboxFolders: "Dossiers",
+      folderInbox: "Boîte de réception",
+      folderSent: "Envoyés",
+      folderArchive: "Archives",
+      folderTrash: "Corbeille",
+      unreadOnly: "Non lus uniquement",
+      allEmails: "Tous les messages",
+      searchEmailsPlaceholder: "Rechercher expéditeur, objet ou texte...",
+      noEmailsFound: "Aucun message trouvé dans ce dossier.",
+      selectEmailPrompt: "Sélectionnez un message dans la liste pour afficher son contenu et l'analyse IA.",
+      aiAnalysisTitle: "✨ Analyse IA & Insights",
+      aiSummary: "Résumé Exécutif",
+      extractedTasks: "Tâches extraites exploitables",
+      deadlineLabel: "Date limite",
+      priorityHigh: "Haute priorité",
+      priorityMedium: "Priorité moyenne",
+      priorityLow: "Basse priorité",
+      markAsRead: "Marquer comme lu",
+      markAsUnread: "Marquer comme non lu",
+      moveToArchive: "Archiver",
+      moveToTrash: "Supprimer",
+      moveToInbox: "Déplacer vers Réception",
+      simulateEmail: "Simuler un e-mail entrant",
+      taskDone: "Terminé",
+      advancedImport: "Options d'importation avancées",
+      datasets: "Enregistrements de données",
+      emails: "E-mails",
+      askAi: "Demander à l'IA...",
     },
   },
 
@@ -1246,6 +1401,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hr: "Risorse Umane",
       quality: "Gestione Qualità",
       studio: "Studio & Impostazioni",
+      inbox: "Posta in arrivo",
       allTagline: "Cabina di comando interfunzionale con coda prioritaria in tempo reale.",
       salesTagline: "Preventivi, ordini chiusi e segnali di fidelizzazione commerciale.",
       purchasingTagline: "Spesa fornitori, approvazioni e stato dei contratti.",
@@ -1254,6 +1410,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hrTagline: "Organico, turnover e ciclo delle valutazioni.",
       qualityTagline: "Conformità SLA, escalation e controlli di qualità.",
       studioTagline: "Personalizza l'esperienza ed elabora i dati sul dispositivo.",
+      inboxTagline: "Comunicazioni aziendali con analisi IA locale e attività.",
     },
     kpis: {
       revenue: "Ricavi",
@@ -1480,6 +1637,35 @@ export const locales: Record<Language, LocaleSchema> = {
       searchNavigation: "Navigazione",
       noResults: "Nessun risultato trovato",
       searchHint: "Esc per chiudere, ↑ ↓ per navigare",
+      inboxTitle: "Casella Aziendale",
+      inboxFolders: "Cartelle",
+      folderInbox: "In arrivo",
+      folderSent: "Inviati",
+      folderArchive: "Archivio",
+      folderTrash: "Cestino",
+      unreadOnly: "Solo non letti",
+      allEmails: "Tutti i messaggi",
+      searchEmailsPlaceholder: "Cerca mittente, oggetto o testo...",
+      noEmailsFound: "Nessun messaggio trovato in questa cartella.",
+      selectEmailPrompt: "Seleziona un messaggio dall'elenco per visualizzarne il contenuto e l'analisi IA.",
+      aiAnalysisTitle: "✨ Analisi IA & Insights",
+      aiSummary: "Riepilogo Esecutivo",
+      extractedTasks: "Attività Estratte Azionabili",
+      deadlineLabel: "Scadenza",
+      priorityHigh: "Alta priorità",
+      priorityMedium: "Media priorità",
+      priorityLow: "Bassa priorità",
+      markAsRead: "Segna come letto",
+      markAsUnread: "Segna come non letto",
+      moveToArchive: "Archivia",
+      moveToTrash: "Elimina",
+      moveToInbox: "Sposta in Arrivo",
+      simulateEmail: "Simula e-mail in arrivo",
+      taskDone: "Completato",
+      advancedImport: "Opzioni di importazione avanzate",
+      datasets: "Record di dati",
+      emails: "Email",
+      askAi: "Chiedi all'IA...",
     },
   },
 
@@ -1493,6 +1679,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hr: "人力资源",
       quality: "质量管理",
       studio: "工作室与设置",
+      inbox: "收件箱",
       allTagline: "集成实时优先任务队列的跨职能控制台。",
       salesTagline: "来自商业运营的报价、成交通道与客户流失信号。",
       purchasingTagline: "供应商支出、报销审批与合同履约健康度。",
@@ -1501,6 +1688,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hrTagline: "人员编制、员工留存与定期绩效评估流程。",
       qualityTagline: "SLA履约率、问题升级与质量卡口管控。",
       studioTagline: "定制系统界面，数据全程本地处理，确保私密性。",
+      inboxTagline: "具备本地人工智能分析的企业电子邮件通信与任务提取。",
     },
     kpis: {
       revenue: "营业收入",
@@ -1727,6 +1915,35 @@ export const locales: Record<Language, LocaleSchema> = {
       searchNavigation: "导航",
       noResults: "未找到结果",
       searchHint: "按 Esc 关闭，↑ ↓ 导航",
+      inboxTitle: "企业邮箱",
+      inboxFolders: "文件夹",
+      folderInbox: "收件箱",
+      folderSent: "已发送",
+      folderArchive: "归档",
+      folderTrash: "废纸篓",
+      unreadOnly: "仅未读",
+      allEmails: "所有邮件",
+      searchEmailsPlaceholder: "搜索发件人、主题或正文...",
+      noEmailsFound: "此文件夹中未找到任何邮件。",
+      selectEmailPrompt: "从列表中选择一封邮件以查看其正文和人工智能分析。",
+      aiAnalysisTitle: "✨ AI 智能分析与洞察",
+      aiSummary: "核心摘要 (TL;DR)",
+      extractedTasks: "可执行提取任务",
+      deadlineLabel: "响应截止时间",
+      priorityHigh: "高优先级",
+      priorityMedium: "中优先级",
+      priorityLow: "低优先级",
+      markAsRead: "标为已读",
+      markAsUnread: "标为未读",
+      moveToArchive: "归档",
+      moveToTrash: "删除",
+      moveToInbox: "移至收件箱",
+      simulateEmail: "模拟接收新邮件",
+      taskDone: "已完成",
+      advancedImport: "高级导入选项",
+      datasets: "数据记录",
+      emails: "电子邮件",
+      askAi: "询问AI...",
     },
   },
 
@@ -1740,6 +1957,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hr: "人事・HR",
       quality: "品質管理",
       studio: "スタジオと設定",
+      inbox: "受信トレイ",
       allTagline: "リアルタイムの優先キューを備えた組織横断の運用ビュー。",
       salesTagline: "商談、受注完了、および顧客維持に関する重要シグナル。",
       purchasingTagline: "仕入先支出、支払承認、および契約健全性ステータス。",
@@ -1748,6 +1966,7 @@ export const locales: Record<Language, LocaleSchema> = {
       hrTagline: "人員数、定着率、および人事評価ワークフロー。",
       qualityTagline: "SLA遵守率、エスカレーション、および品質ゲート管理。",
       studioTagline: "環境をカスタマイズし、データ処理を端末内で完結。",
+      inboxTagline: "ローカルAI分析を備えたエンタープライズ電子メール通信とタスク抽出。",
     },
     kpis: {
       revenue: "売上高",
@@ -1974,6 +2193,35 @@ export const locales: Record<Language, LocaleSchema> = {
       searchNavigation: "ナビゲーション",
       noResults: "結果が見つかりません",
       searchHint: "Escで閉じる、↑ ↓で移動",
+      inboxTitle: "エンタープライズ受信トレイ",
+      inboxFolders: "フォルダ",
+      folderInbox: "受信トレイ",
+      folderSent: "送信済み",
+      folderArchive: "アーカイブ",
+      folderTrash: "ゴミ箱",
+      unreadOnly: "未読のみ",
+      allEmails: "すべてのメッセージ",
+      searchEmailsPlaceholder: "送信者、件名、本文を検索...",
+      noEmailsFound: "このフォルダにはメッセージがありません。",
+      selectEmailPrompt: "リストからメッセージを選択して、内容とAI分析を表示します。",
+      aiAnalysisTitle: "✨ AI分析・インサイト",
+      aiSummary: "要約 (TL;DR)",
+      extractedTasks: "抽出された実行タスク",
+      deadlineLabel: "対応期限",
+      priorityHigh: "高優先度",
+      priorityMedium: "中優先度",
+      priorityLow: "低優先度",
+      markAsRead: "既読にする",
+      markAsUnread: "未読にする",
+      moveToArchive: "アーカイブ",
+      moveToTrash: "削除",
+      moveToInbox: "受信トレイへ移動",
+      simulateEmail: "受信メールをシミュレート",
+      taskDone: "完了",
+      advancedImport: "高度なインポート設定",
+      datasets: "データレコード",
+      emails: "電子メール",
+      askAi: "AIに質問...",
     },
   },
 };

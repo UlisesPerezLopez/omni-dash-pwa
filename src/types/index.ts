@@ -60,7 +60,8 @@ export type Department =
   | "finance"
   | "ops"
   | "hr"
-  | "quality";
+  | "quality"
+  | "inbox";
 
 export type Screen = Department | "studio";
 
@@ -218,6 +219,30 @@ export interface SyncQueueRecord {
   payload: unknown;
   timestamp: string;
   status: SyncStatus;
+}
+
+export type EmailFolder = "inbox" | "sent" | "archive" | "trash";
+export type EmailStatus = "read" | "unread";
+export type EmailAiPriority = "High" | "Medium" | "Low";
+
+export interface EmailAiAnalysis {
+  priority: EmailAiPriority;
+  summary: string;
+  extractedTasks: string[];
+  deadline: string | null;
+}
+
+export interface EmailRecord {
+  id: string;
+  subject: string;
+  body: string;
+  sender: string;
+  recipient: string;
+  date: string;
+  status: EmailStatus;
+  folder: EmailFolder;
+  aiAnalysis: EmailAiAnalysis;
+  completedTasks?: string[];
 }
 
 

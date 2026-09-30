@@ -10,6 +10,7 @@ export const departmentList: DepartmentDef[] = [
   { id: "ops", label: "Operations & Logistics", tagline: "Backlog voice, shipment flow and site health.", icon: "ops", categories: ["tasks", "inventory"], emoji: "⚙️" },
   { id: "hr", label: "People & HR", tagline: "Headcount, retention and review workflow.", icon: "users", categories: ["employees"], emoji: "👥" },
   { id: "quality", label: "Quality Management", tagline: "SLA compliance, escalations and quality gates.", icon: "shield", categories: ["tasks", "inventory"], emoji: "⚖️" },
+  { id: "inbox", label: "Inbox", tagline: "Enterprise email comms with local AI analysis and task extraction.", icon: "mail", categories: null, emoji: "📩" },
 ];
 
 

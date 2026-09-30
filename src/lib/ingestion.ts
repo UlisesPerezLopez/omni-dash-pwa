@@ -2,7 +2,8 @@ import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import * as pdfjsLib from "pdfjs-dist";
 import mammoth from "mammoth";
-import type { DataCategory, DataEntry, BrandPalette, IngestResult } from "../types";
+import type { DataCategory, DataEntry, BrandPalette, IngestResult, EmailRecord } from "../types";
+import { api } from "../services/api";
 export type { BrandPalette, IngestResult };
 
 // Configure PDF.js worker for local bundler environment
@@ -154,7 +155,196 @@ export async function ingestFile(file: File): Promise<IngestResult> {
     });
     return { fileName: file.name, kind: "data", entries: rowsToEntries(rows, file.name), note: `${rows.length} spreadsheet rows normalized locally.` };
   }
+  if (extension === "json") {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const rows = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed?.entries)
+      ? parsed.entries
+      : Array.isArray(parsed?.emails)
+      ? parsed.emails
+      : [parsed];
+    return {
+      fileName: file.name,
+      kind: "data",
+      entries: rowsToEntries(rows, file.name),
+      note: `${rows.length} JSON objects normalized locally.`,
+    };
+  }
   throw new Error(`No offline parser is available for .${extension || "this"} yet.`);
+}
+
+export interface IngestDatasetResult {
+  success: boolean;
+  type: "emails" | "entries" | "mixed";
+  emailsCount: number;
+  entriesCount: number;
+  message: string;
+}
+
+/**
+ * Processes an uploaded JSON file using FileReader, validates whether it contains
+ * emails (EmailRecord) or standard data entries (DataEntry), and bulk-persists
+ * directly into Dexie IndexedDB (emails or data_entries).
+ */
+export async function processUploadedJSON(file: File): Promise<IngestDatasetResult> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        let json: any;
+        try {
+          json = JSON.parse(text);
+        } catch {
+          reject(new Error(`Invalid JSON syntax in file "${file.name}".`));
+          return;
+        }
+
+        const isEmailLike = (item: any) =>
+          item &&
+          typeof item === "object" &&
+          (("subject" in item && "body" in item) ||
+            ("sender" in item && "recipient" in item) ||
+            "aiAnalysis" in item);
+
+        let rawEmails: any[] = [];
+        let rawEntries: any[] = [];
+
+        if (Array.isArray(json)) {
+          rawEmails = json.filter(isEmailLike);
+          rawEntries = json.filter((item) => !isEmailLike(item));
+        } else if (json && typeof json === "object") {
+          if (Array.isArray(json.emails)) {
+            rawEmails = json.emails;
+          }
+          if (Array.isArray(json.entries)) {
+            rawEntries = json.entries;
+          }
+          if (!Array.isArray(json.emails) && !Array.isArray(json.entries)) {
+            if (isEmailLike(json)) {
+              rawEmails = [json];
+            } else {
+              rawEntries = [json];
+            }
+          }
+        }
+
+        let savedEmailsCount = 0;
+        let savedEntriesCount = 0;
+
+        if (rawEmails.length > 0) {
+          const normalizedEmails: EmailRecord[] = rawEmails.map((item, idx) => ({
+            id: String(item.id || `em_import_${Date.now()}_${idx}`),
+            subject: String(item.subject || "Imported Communication"),
+            body: String(item.body || ""),
+            sender: String(item.sender || "System <system@omnidash.internal>"),
+            recipient: String(item.recipient || "Ulises Pérez <u.perez@omnidash.internal>"),
+            date: item.date ? new Date(item.date).toISOString() : new Date().toISOString(),
+            status: item.status === "unread" ? "unread" : "read",
+            folder: ["inbox", "sent", "archive", "trash"].includes(item.folder) ? item.folder : "inbox",
+            aiAnalysis: {
+              priority: ["High", "Medium", "Low"].includes(item.aiAnalysis?.priority)
+                ? item.aiAnalysis.priority
+                : "Medium",
+              summary: String(
+                item.aiAnalysis?.summary || String(item.body || "").slice(0, 100) || "Imported communication."
+              ),
+              extractedTasks: Array.isArray(item.aiAnalysis?.extractedTasks)
+                ? item.aiAnalysis.extractedTasks.map(String)
+                : [],
+              deadline: item.aiAnalysis?.deadline ? String(item.aiAnalysis.deadline) : null,
+            },
+            completedTasks: Array.isArray(item.completedTasks) ? item.completedTasks.map(String) : [],
+          }));
+
+          await api.saveEmails(normalizedEmails);
+          savedEmailsCount = normalizedEmails.length;
+        }
+
+        if (rawEntries.length > 0) {
+          const normalizedEntries: DataEntry[] = rowsToEntries(rawEntries, file.name);
+          await api.saveEntries(normalizedEntries);
+          savedEntriesCount = normalizedEntries.length;
+        }
+
+        if (savedEmailsCount > 0 && savedEntriesCount > 0) {
+          resolve({
+            success: true,
+            type: "mixed",
+            emailsCount: savedEmailsCount,
+            entriesCount: savedEntriesCount,
+            message: `Imported ${savedEmailsCount} emails and ${savedEntriesCount} records successfully.`,
+          });
+          return;
+        }
+
+        if (savedEmailsCount > 0) {
+          resolve({
+            success: true,
+            type: "emails",
+            emailsCount: savedEmailsCount,
+            entriesCount: 0,
+            message: `Imported ${savedEmailsCount} emails successfully.`,
+          });
+          return;
+        }
+
+        if (savedEntriesCount > 0) {
+          resolve({
+            success: true,
+            type: "entries",
+            emailsCount: 0,
+            entriesCount: savedEntriesCount,
+            message: `Imported ${savedEntriesCount} records successfully.`,
+          });
+          return;
+        }
+
+        reject(new Error("No recognizable email or dataset records found in JSON."));
+      } catch (err: any) {
+        reject(err instanceof Error ? err : new Error(String(err)));
+      }
+    };
+
+    reader.onerror = () => reject(new Error(`Failed to read file "${file.name}".`));
+    reader.readAsText(file);
+  });
+}
+
+/**
+ * Validates and bulk-persists an uploaded dataset (JSON, CSV, XLSX, etc.)
+ * directly into Dexie IndexedDB (emails or data_entries).
+ */
+export async function ingestDatasetFile(file: File): Promise<IngestDatasetResult> {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "";
+
+  if (extension === "json") {
+    return await processUploadedJSON(file);
+  }
+
+  // Fallback for CSV, XLSX, etc.
+  const result = await ingestFile(file);
+  if (result.entries.length > 0) {
+    await api.saveEntries(result.entries);
+    return {
+      success: true,
+      type: "entries",
+      emailsCount: 0,
+      entriesCount: result.entries.length,
+      message: `Imported ${result.entries.length} records from ${file.name}.`,
+    };
+  }
+
+  return {
+    success: true,
+    type: "entries",
+    emailsCount: 0,
+    entriesCount: 0,
+    message: result.note || `Processed ${file.name}.`,
+  };
 }
 
 export function evaluateConfidence(

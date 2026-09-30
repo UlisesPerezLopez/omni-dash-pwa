@@ -81,6 +81,7 @@ export function useGlobalSearch(query: string) {
       { id: "ops", label: "Operations & Logistics", tagline: "Inventory, fulfillment, delays", emoji: "📦", icon: "ops" },
       { id: "hr", label: "Human Resources", tagline: "Headcount, reviews, workforce", emoji: "👥", icon: "users" },
       { id: "quality", label: "Quality Management", tagline: "SLA compliance, escalations", emoji: "🛡️", icon: "shield" },
+      { id: "inbox", label: "Enterprise Inbox", tagline: "Email comms with local AI analysis", emoji: "📩", icon: "mail" },
       { id: "studio", label: "Studio & Settings", tagline: "Branding, themes, colors, storage", emoji: "🎨", icon: "palette" },
       { id: "staging", label: "Smart Staging Inbox", tagline: "Ingested documents & AI validation", emoji: "📥", icon: "upload" },
     ];

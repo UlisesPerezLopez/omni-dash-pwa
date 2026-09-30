@@ -8,8 +8,11 @@ import type {
   DataCategory,
   SyncQueueRecord,
   SyncStatus,
+  EmailRecord,
+  EmailFolder,
+  EmailStatus,
 } from "../types";
-import { generateDemoEntries } from "./demo";
+import { generateDemoEntries, generateDemoEmails } from "./demo";
 import { buildActionItems } from "../components/ActionCenter";
 
 export class OmniDashDB extends Dexie {
@@ -19,6 +22,7 @@ export class OmniDashDB extends Dexie {
   custom_widgets!: Table<WidgetSetting, string>;
   staging_inbox!: Table<StagingEntry, string>;
   sync_queue!: Table<SyncQueueRecord, string>;
+  emails!: Table<EmailRecord, string>;
 
   constructor() {
     super("omnidash_enterprise_os");
@@ -42,6 +46,15 @@ export class OmniDashDB extends Dexie {
       custom_widgets: "id, visible, pinned",
       staging_inbox: "id, status, confidenceScore, ingestedAt",
       sync_queue: "id, actionType, entityId, payload, timestamp, status",
+    });
+    this.version(5).stores({
+      data_entries: "id, category, ingestedAt, sourceName, date, site, region, status, dealType, shipmentStatus, priority, resolved, approved",
+      action_queue: "id, kind, priority, resolved, snoozedAt, entryId",
+      app_settings: "key, updatedAt",
+      custom_widgets: "id, visible, pinned",
+      staging_inbox: "id, status, confidenceScore, ingestedAt",
+      sync_queue: "id, actionType, entityId, payload, timestamp, status",
+      emails: "id, folder, status, date, sender, recipient",
     });
   }
 }
@@ -73,10 +86,11 @@ export async function syncActionQueue(entries: DataEntry[]): Promise<void> {
   }
 }
 
-/** Seeds Dexie with 50+ realistic cross-departmental records and populates action queue */
+/** Seeds Dexie with 50+ realistic cross-departmental records and populates action queue & emails */
 export async function seedDemoData(count = 1250): Promise<DataEntry[]> {
   const entries = generateDemoEntries(count);
-  await db.transaction("rw", [db.data_entries, db.action_queue], async () => {
+  const demoEmails = generateDemoEmails();
+  await db.transaction("rw", [db.data_entries, db.action_queue, db.emails], async () => {
     await db.data_entries.clear();
     await db.data_entries.bulkPut(entries);
     const derived = buildActionItems(entries);
@@ -89,6 +103,8 @@ export async function seedDemoData(count = 1250): Promise<DataEntry[]> {
         resolvedAt: null,
       }))
     );
+    await db.emails.clear();
+    await db.emails.bulkPut(demoEmails);
   });
   return entries;
 }
@@ -151,13 +167,14 @@ export async function snoozeActionInDb(actionId: string): Promise<void> {
 }
 
 export async function createSnapshot() {
-  const [entries, queue, settings, widgets, staging, syncQueue] = await Promise.all([
+  const [entries, queue, settings, widgets, staging, syncQueue, emails] = await Promise.all([
     db.data_entries.toArray(),
     db.action_queue.toArray(),
     getSettings(),
     getWidgets(),
     db.staging_inbox.toArray(),
     db.sync_queue.toArray(),
+    db.emails.toArray(),
   ]);
   return {
     app: "OmniDash Enterprise OS",
@@ -168,6 +185,7 @@ export async function createSnapshot() {
     widgets,
     staging,
     syncQueue,
+    emails,
   };
 }
 
@@ -279,5 +297,61 @@ export async function markSyncBatch(ids: string[], status: SyncStatus): Promise<
 export async function clearSyncedQueue(): Promise<void> {
   await db.sync_queue.where("status").equals("synced").delete();
 }
+
+/** ----------------- Enterprise Email System Helpers ----------------- */
+
+export async function ensureEmailsSeeded(): Promise<void> {
+  const count = await db.emails.count();
+  if (count === 0) {
+    const emails = generateDemoEmails();
+    await db.emails.bulkPut(emails);
+  }
+}
+
+export async function getEmails(folder?: EmailFolder): Promise<EmailRecord[]> {
+  await ensureEmailsSeeded();
+  if (folder) {
+    return await db.emails.where("folder").equals(folder).reverse().sortBy("date");
+  }
+  return await db.emails.reverse().sortBy("date");
+}
+
+export async function saveEmails(emails: EmailRecord[]): Promise<void> {
+  await db.emails.bulkPut(emails);
+}
+
+export async function updateEmail(id: string, changes: Partial<EmailRecord>): Promise<void> {
+  await db.emails.update(id, changes);
+}
+
+export async function markEmailStatus(id: string, status: EmailStatus): Promise<void> {
+  await db.emails.update(id, { status });
+}
+
+export async function moveEmailFolder(id: string, folder: EmailFolder): Promise<void> {
+  await db.emails.update(id, { folder });
+}
+
+export async function toggleEmailTask(emailId: string, task: string): Promise<void> {
+  const email = await db.emails.get(emailId);
+  if (!email) return;
+  const currentCompleted = email.completedTasks || [];
+  const updatedCompleted = currentCompleted.includes(task)
+    ? currentCompleted.filter((t) => t !== task)
+    : [...currentCompleted, task];
+  await db.emails.update(emailId, { completedTasks: updatedCompleted });
+}
+
+export async function deleteEmail(id: string): Promise<void> {
+  await db.emails.delete(id);
+}
+
+export async function seedDemoEmails(): Promise<EmailRecord[]> {
+  const emails = generateDemoEmails();
+  await db.emails.clear();
+  await db.emails.bulkPut(emails);
+  return emails;
+}
+
 
 

@@ -23,6 +23,15 @@ import {
   getPendingSyncRecords as localGetPendingSyncRecords,
   updateSyncStatus as localUpdateSyncStatus,
   markSyncBatch as localMarkSyncBatch,
+  getEmails as localGetEmails,
+  saveEmails as localSaveEmails,
+  updateEmail as localUpdateEmail,
+  markEmailStatus as localMarkEmailStatus,
+  moveEmailFolder as localMoveEmailFolder,
+  toggleEmailTask as localToggleEmailTask,
+  deleteEmail as localDeleteEmail,
+  ensureEmailsSeeded,
+  seedDemoEmails as localSeedDemoEmails,
 } from "../lib/db";
 import type {
   DataEntry,
@@ -33,6 +42,9 @@ import type {
   SyncQueueRecord,
   SyncStatus,
   AppSetting,
+  EmailRecord,
+  EmailFolder,
+  EmailStatus,
 } from "../types";
 
 export interface SnapshotData {
@@ -71,6 +83,14 @@ export interface DashboardRepository {
   getPendingSyncQueue(): Promise<SyncQueueRecord[]>;
   updateSyncStatus(id: string, status: SyncStatus): Promise<void>;
   markSyncBatch(ids: string[], status: SyncStatus): Promise<void>;
+  getEmails(folder?: EmailFolder): Promise<EmailRecord[]>;
+  saveEmails(emails: EmailRecord[]): Promise<void>;
+  updateEmail(id: string, changes: Partial<EmailRecord>): Promise<void>;
+  markEmailStatus(id: string, status: EmailStatus): Promise<void>;
+  moveEmailFolder(id: string, folder: EmailFolder): Promise<void>;
+  toggleEmailTask(emailId: string, task: string): Promise<void>;
+  deleteEmail(id: string): Promise<void>;
+  seedDemoEmails(): Promise<EmailRecord[]>;
 }
 
 
@@ -171,6 +191,38 @@ export class LocalRepository implements DashboardRepository {
 
   async markSyncBatch(ids: string[], status: SyncStatus): Promise<void> {
     return localMarkSyncBatch(ids, status);
+  }
+
+  async getEmails(folder?: EmailFolder): Promise<EmailRecord[]> {
+    return localGetEmails(folder);
+  }
+
+  async saveEmails(emails: EmailRecord[]): Promise<void> {
+    await localSaveEmails(emails);
+  }
+
+  async updateEmail(id: string, changes: Partial<EmailRecord>): Promise<void> {
+    await localUpdateEmail(id, changes);
+  }
+
+  async markEmailStatus(id: string, status: EmailStatus): Promise<void> {
+    await localMarkEmailStatus(id, status);
+  }
+
+  async moveEmailFolder(id: string, folder: EmailFolder): Promise<void> {
+    await localMoveEmailFolder(id, folder);
+  }
+
+  async toggleEmailTask(emailId: string, task: string): Promise<void> {
+    await localToggleEmailTask(emailId, task);
+  }
+
+  async deleteEmail(id: string): Promise<void> {
+    await localDeleteEmail(id);
+  }
+
+  async seedDemoEmails(): Promise<EmailRecord[]> {
+    return localSeedDemoEmails();
   }
 }
 
@@ -396,6 +448,38 @@ export class ServerRepository implements DashboardRepository {
   async markSyncBatch(_ids: string[], _status: SyncStatus): Promise<void> {
     // No-op in server mode
   }
+
+  async getEmails(folder?: EmailFolder): Promise<EmailRecord[]> {
+    return localGetEmails(folder);
+  }
+
+  async saveEmails(emails: EmailRecord[]): Promise<void> {
+    await localSaveEmails(emails);
+  }
+
+  async updateEmail(id: string, changes: Partial<EmailRecord>): Promise<void> {
+    await localUpdateEmail(id, changes);
+  }
+
+  async markEmailStatus(id: string, status: EmailStatus): Promise<void> {
+    await localMarkEmailStatus(id, status);
+  }
+
+  async moveEmailFolder(id: string, folder: EmailFolder): Promise<void> {
+    await localMoveEmailFolder(id, folder);
+  }
+
+  async toggleEmailTask(emailId: string, task: string): Promise<void> {
+    await localToggleEmailTask(emailId, task);
+  }
+
+  async deleteEmail(id: string): Promise<void> {
+    await localDeleteEmail(id);
+  }
+
+  async seedDemoEmails(): Promise<EmailRecord[]> {
+    return localSeedDemoEmails();
+  }
 }
 
 export const isServerMode = import.meta.env.VITE_API_MODE === "server";
@@ -485,4 +569,43 @@ export function useDashboardData(): UseDashboardDataResult {
     isLoading,
     refresh: fetchServerData,
   };
+}
+
+/**
+ * Hook to retrieve live reactive list of emails, optionally filtered by folder.
+ */
+export function useEmails(folder?: EmailFolder): EmailRecord[] {
+  useEffect(() => {
+    void ensureEmailsSeeded();
+  }, []);
+
+  const liveEmails = useLiveQuery<EmailRecord[]>(
+    () => {
+      if (folder) {
+        return db.emails.where("folder").equals(folder).reverse().sortBy("date");
+      }
+      return db.emails.reverse().sortBy("date");
+    },
+    [folder]
+  );
+
+  return liveEmails ?? [];
+}
+
+export function useEmailCounts(): { inboxUnread: number; inboxTotal: number; sentTotal: number; archiveTotal: number; trashTotal: number } {
+  useEffect(() => {
+    void ensureEmailsSeeded();
+  }, []);
+
+  const allEmails = useLiveQuery<EmailRecord[]>(() => db.emails.toArray(), []);
+  return useMemo(() => {
+    const list: EmailRecord[] = allEmails ?? [];
+    return {
+      inboxUnread: list.filter((e) => e.folder === "inbox" && e.status === "unread").length,
+      inboxTotal: list.filter((e) => e.folder === "inbox").length,
+      sentTotal: list.filter((e) => e.folder === "sent").length,
+      archiveTotal: list.filter((e) => e.folder === "archive").length,
+      trashTotal: list.filter((e) => e.folder === "trash").length,
+    };
+  }, [allEmails]);
 }

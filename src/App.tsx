@@ -5,15 +5,17 @@ import { Tile, TileMenu, StatTile, StatusDot, DataTable, Pill, useTileColorOverr
 import { ActionRail, ActionDrawer, buildActionItems } from "./components/ActionCenter";
 import { StagingInbox } from "./components/StagingInbox";
 import { OmniSearch } from "./components/OmniSearch";
+import { GlobalCopilot } from "./components/GlobalCopilot";
 import { Topbar } from "./components/Topbar";
 import { Studio } from "./components/Studio";
+import { Inbox } from "./components/Inbox";
 import { generateDemoEntries } from "./lib/demo";
-import { ingestFile, evaluateConfidence } from "./lib/ingestion";
+import { ingestFile, evaluateConfidence, ingestDatasetFile } from "./lib/ingestion";
 import { useTranslation } from "./hooks/useTranslation";
 import {
   departmentList, filterByDepartment, computeStats, bucketTrend, fallbackTrend, dayLabels,
 } from "./lib/departments";
-import { api, useDashboardData } from "./services/api";
+import { api, useDashboardData, useEmailCounts } from "./services/api";
 import { useSyncManager } from "./hooks/useSyncManager";
 import * as XLSX from "xlsx";
 import type {
@@ -157,10 +159,12 @@ export default function App() {
 
   const [isStagingOpen, setIsStagingOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
   // Repository hook abstracting IndexedDB / Server state
   const { records, queueRecords, stagingItems } = useDashboardData();
   const pendingStagingCount = stagingItems.filter((item) => item.status === "pending").length;
+  const emailCounts = useEmailCounts();
 
   // Outbox pattern sync manager hook
   const { isOnline, pendingSyncCount, syncNow } = useSyncManager();
@@ -608,6 +612,14 @@ export default function App() {
     const notes: string[] = [];
     for (const file of list) {
       try {
+        if (file.name.toLowerCase().endsWith(".json")) {
+          const res = await ingestDatasetFile(file);
+          stagedCount += res.entriesCount + res.emailsCount;
+          notes.push(`${file.name}: ${res.message}`);
+          notify(res.message);
+          continue;
+        }
+
         const result = await ingestFile(file);
         if (result.palette) brand = result.palette;
 
@@ -1119,6 +1131,8 @@ export default function App() {
         language={language}
         onLanguageChange={setLanguage}
         recordsCount={records.length}
+        emailsCount={emailCounts.inboxTotal + emailCounts.sentTotal + emailCounts.archiveTotal + emailCounts.trashTotal}
+        onFileIngested={(msg) => notify(msg)}
         sourcesCount={records.length ? [...new Set(records.map((r) => r.sourceName))].length : 0}
         pendingSyncCount={pendingSyncCount}
         onTriggerSync={() => void syncNow()}
@@ -1142,6 +1156,7 @@ export default function App() {
     : screen === "ops" ? renderOps()
     : screen === "hr" ? renderHR()
     : screen === "quality" ? renderQuality()
+    : screen === "inbox" ? <Inbox t={t} onNavigateHome={() => setScreen("all")} />
     : renderStudio();
 
   return (
@@ -1167,17 +1182,26 @@ export default function App() {
         fallbackBrandName={brandName}
         fallbackLogoUrl={customLogo}
         fallbackLogoHeight={logoHeight}
+        onOpenCopilot={() => setIsCopilotOpen(true)}
+        isCopilotOpen={isCopilotOpen}
+        onCloseCopilot={() => setIsCopilotOpen(false)}
       />
 
       <nav className="dept-nav" aria-label="Departments">
         {departmentList.map((item) => {
-          const count = filterByDepartment(filteredRecords, item.id).length;
+          const count = item.id === "inbox"
+            ? emailCounts.inboxUnread
+            : filterByDepartment(filteredRecords, item.id).length;
           const label = t(`nav.${item.id}`) || t(item.id) || item.label;
           return (
-            <button key={item.id} type="button" className={`pill ${deptScreen === item.id && screen !== "studio" ? "active" : ""}`} onClick={() => setScreen(item.id)}>
+            <button key={item.id} type="button" className={`pill ${screen === item.id ? "active" : ""}`} onClick={() => setScreen(item.id)}>
               {item.emoji && <span className="pill-emoji" style={{ fontSize: "14px", lineHeight: 1 }}>{item.emoji}</span>}
               <span>{label}</span>
-              {filteredRecords.length > 0 && <i className="pill-count">{count.toLocaleString()}</i>}
+              {count > 0 && (
+                <i className={`pill-count ${item.id === "inbox" ? "pill-count-inbox" : ""}`}>
+                  {item.id === "inbox" ? `(${count})` : count.toLocaleString()}
+                </i>
+              )}
             </button>
           );
         })}
@@ -1193,7 +1217,7 @@ export default function App() {
 
       <main className="workspace">
         {screen !== "all" && <button type="button" className="breadcrumb" onClick={() => setScreen("all")}><Icon name="arrow" size={15} />{t("back")}</button>}
-        {screen === "studio" ? content : opsGrid(content)}
+        {screen === "studio" || screen === "inbox" ? content : opsGrid(content)}
       </main>
 
       {/* Sliding drawer for Wichtig action items */}
@@ -1240,6 +1264,12 @@ export default function App() {
           });
         }}
         t={t}
+      />
+
+      {/* Global Enterprise Copilot Drawer */}
+      <GlobalCopilot
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
       />
 
       {/* Fullscreen drill-down */}
