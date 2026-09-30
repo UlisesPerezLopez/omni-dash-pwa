@@ -636,7 +636,7 @@ button { cursor: pointer; }
 }
 
 .studio-sidebar {
-  background-color: var(--surface-alt);
+  background-color: var(--surface);
   border-right: 1px solid var(--line);
   padding: 16px 10px;
   display: flex;
@@ -1342,7 +1342,7 @@ html[data-mode="simple"] .deep-only { display: none; }
 
 /* Col 1: Sidebar */
 .inbox-sidebar-col {
-  background: var(--surface-alt);
+  background: var(--surface);
   border-right: 1px solid var(--line);
   padding: 14px 10px;
   display: flex;
@@ -1513,7 +1513,7 @@ html[data-mode="simple"] .deep-only { display: none; }
 .inbox-search-wrap {
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
-  background: var(--surface-alt);
+  background: var(--surface);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2306,3 +2306,22 @@ html[data-mode="simple"] .deep-only { display: none; }
   .tile, .stat-tile { break-inside: avoid; color: #111; background: #fff; border-color: #ddd; }
   .page-heading p, .eyebrow { color: #555; }
 }
+
+/* Phase 30: Omni Assistant Avatar & Float Animation */
+@keyframes floatOmni {
+  0% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-4px) scale(1.02); }
+  100% { transform: translateY(0px) scale(1); }
+}
+
+.omni-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  animation: floatOmni 3s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(var(--info-rgb, 43, 76, 89), 0.3);
+  object-fit: cover;
+  display: inline-block;
+  vertical-align: middle;
+}
+

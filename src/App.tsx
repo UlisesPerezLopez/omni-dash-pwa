@@ -180,12 +180,21 @@ export default function App() {
   const defaultBg = dark ? "#1C1917" : "#F5F3ED";
   const defaultTextMain = dark ? "#E7E5E4" : "#2D2823";
 
+  const [savedTextColor, setSavedTextColor] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("omnidash_text_color");
+    } catch {
+      return null;
+    }
+  });
+
   const effectivePrimary = brandPrimary || defaultPrimary;
   const effectiveSecondary = brandSecondary || defaultSecondary;
   const effectiveTertiary = brandTertiary || defaultTertiary;
   const effectiveAccent = brandAccent || defaultAccent;
   const effectiveSurface = brandSurface || defaultSurface;
   const effectiveBg = brandBg || defaultBg;
+  const effectiveTextMain = savedTextColor || defaultTextMain;
   const effectiveHover = adjustBrightness(effectivePrimary, -15);
   const selectedFont = FONT_MAP[typography] || FONT_MAP.sans;
 
@@ -224,13 +233,19 @@ export default function App() {
     "--color-info": effectiveTertiary,
     "--accent": effectiveAccent,
     "--color-accent": effectiveAccent,
-    "--text-main": defaultTextMain,
-    "--color-text-main": defaultTextMain,
+    "--text-main": effectiveTextMain,
+    "--color-text-main": effectiveTextMain,
+    "--ink": effectiveTextMain,
     "--radius-card": `${borderRadius}px`,
     "--card-shadow": effectiveCardShadow,
     "--font-family": selectedFont,
     "--logo-height": `${logoHeight}px`,
-    ...(brandSurface ? { "--surface": brandSurface, "--color-surface": brandSurface, "--card-bg": brandSurface } : {}),
+    ...(brandSurface ? {
+      "--surface": brandSurface,
+      "--color-surface": brandSurface,
+      "--card-bg": brandSurface,
+      "--surface-alt": adjustBrightness(brandSurface, -5),
+    } : {}),
     ...(brandBg ? { "--bg": brandBg, "--color-canvas": brandBg } : {}),
     ...(brandLine ? { "--line": brandLine } : {}),
   } as CSSProperties;
@@ -279,6 +294,12 @@ export default function App() {
     setTypography("sans-inter");
     setCustomLogo(null);
     setLogoHeight(32);
+    setSavedTextColor(null);
+    try {
+      localStorage.removeItem("omnidash_text_color");
+    } catch {
+      // ignore
+    }
     void api.saveSettings({
       brandName: "OmniDash",
       brandPrimary: dark ? "#D98A6F" : "#C27358",
@@ -299,6 +320,26 @@ export default function App() {
   };
 
   /* ---------- Bootstrap settings from storage + service worker ---------- */
+  useEffect(() => {
+    const handleTextColorChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setSavedTextColor(customEvent.detail);
+      } else {
+        try {
+          setSavedTextColor(localStorage.getItem("omnidash_text_color"));
+        } catch {
+          // ignore
+        }
+      }
+    };
+    window.addEventListener("omnidash_text_color_change", handleTextColorChange);
+    window.addEventListener("storage", handleTextColorChange);
+    return () => {
+      window.removeEventListener("omnidash_text_color_change", handleTextColorChange);
+      window.removeEventListener("storage", handleTextColorChange);
+    };
+  }, []);
   useEffect(() => {
     document.title = `${brandName || "OmniDash"} Enterprise OS`;
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
@@ -356,6 +397,29 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, []);
 
+  // Phase 27: Intercept Chrome Extension sync messages and hydrate Dexie reactively
+  useEffect(() => {
+    const handleExtensionSync = async (event: MessageEvent) => {
+      // Validate message structure
+      if (event.data?.type === "OMNIDASH_EXTENSION_SYNC" && event.data?.payload) {
+        try {
+          const emailRecord = event.data.payload;
+          // Push directly to Dexie using the existing API layer
+          await api.saveEmails([emailRecord]);
+
+          // Optional UX Polish: Console log and toast notification
+          console.log("✨ OmniDash: Email synced successfully from Chrome Extension", emailRecord.id);
+          notify(`Synced: ${emailRecord.subject || "Email from Chrome Extension"}`);
+        } catch (error) {
+          console.error("OmniDash Sync Error:", error);
+        }
+      }
+    };
+
+    window.addEventListener("message", handleExtensionSync);
+    return () => window.removeEventListener("message", handleExtensionSync);
+  }, []);
+
   useEffect(() => {
     if (isReady) {
       void api.saveSettings({
@@ -391,6 +455,16 @@ export default function App() {
   useEffect(() => { document.documentElement.dataset.mode = mode; }, [mode]);
 
   useEffect(() => {
+    document.documentElement.lang = language;
+    try {
+      localStorage.setItem("omnidash_language", language);
+    } catch {
+      // ignore
+    }
+    window.dispatchEvent(new CustomEvent("omnidash_language_change", { detail: language }));
+  }, [language]);
+
+  useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty("--primary", effectivePrimary);
     root.style.setProperty("--color-primary", effectivePrimary);
@@ -404,18 +478,30 @@ export default function App() {
     root.style.setProperty("--color-info", effectiveTertiary);
     root.style.setProperty("--accent", effectiveAccent);
     root.style.setProperty("--color-accent", effectiveAccent);
-    root.style.setProperty("--text-main", defaultTextMain);
-    root.style.setProperty("--color-text-main", defaultTextMain);
+    root.style.setProperty("--text-main", effectiveTextMain);
+    root.style.setProperty("--color-text-main", effectiveTextMain);
+    root.style.setProperty("--ink", effectiveTextMain);
+    if (savedTextColor) {
+      root.style.setProperty("--ink-secondary", `color-mix(in srgb, ${savedTextColor} 75%, transparent)`);
+      root.style.setProperty("--muted", `color-mix(in srgb, ${savedTextColor} 60%, transparent)`);
+      root.style.setProperty("--faint", `color-mix(in srgb, ${savedTextColor} 40%, transparent)`);
+    } else {
+      root.style.removeProperty("--ink-secondary");
+      root.style.removeProperty("--muted");
+      root.style.removeProperty("--faint");
+    }
     root.style.setProperty("--card-shadow", effectiveCardShadow);
 
     if (brandSurface) {
       root.style.setProperty("--surface", brandSurface);
       root.style.setProperty("--color-surface", brandSurface);
       root.style.setProperty("--card-bg", brandSurface);
+      root.style.setProperty("--surface-alt", adjustBrightness(brandSurface, -5));
     } else {
       root.style.removeProperty("--surface");
       root.style.removeProperty("--color-surface");
       root.style.removeProperty("--card-bg");
+      root.style.removeProperty("--surface-alt");
     }
 
     if (brandBg) {
@@ -435,7 +521,7 @@ export default function App() {
     root.style.setProperty("--radius-card", `${borderRadius}px`);
     root.style.setProperty("--font-family", selectedFont);
     root.style.setProperty("--logo-height", `${logoHeight}px`);
-  }, [effectivePrimary, effectiveHover, effectiveSecondary, effectiveTertiary, effectiveAccent, effectiveCardShadow, brandSurface, brandBg, brandLine, defaultTextMain, borderRadius, selectedFont, logoHeight, theme]);
+  }, [effectivePrimary, effectiveHover, effectiveSecondary, effectiveTertiary, effectiveAccent, effectiveCardShadow, brandSurface, brandBg, brandLine, effectiveTextMain, savedTextColor, borderRadius, selectedFont, logoHeight, theme]);
   useEffect(() => {
     if (!isReady) return;
     const widget: WidgetSetting = { id: "department-nav", visible: true, pinned: true, filters: { screen, query } };
@@ -1270,6 +1356,7 @@ export default function App() {
       <GlobalCopilot
         isOpen={isCopilotOpen}
         onClose={() => setIsCopilotOpen(false)}
+        language={language}
       />
 
       {/* Fullscreen drill-down */}

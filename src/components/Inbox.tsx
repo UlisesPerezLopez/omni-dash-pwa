@@ -11,147 +11,6 @@ export interface ChatMessage {
   timestamp: string;
 }
 
-export function generateAiResponse(prompt: string, email: EmailRecord): string {
-  const p = prompt.toLowerCase();
-  const senderName = email.sender.split("<")[0].trim();
-  const summary = email.aiAnalysis.summary;
-  const tasks = email.aiAnalysis.extractedTasks;
-  const deadline = email.aiAnalysis.deadline;
-
-  // 1. Reply / Response drafting
-  if (
-    p.includes("reply") ||
-    p.includes("draft") ||
-    p.includes("respond") ||
-    p.includes("answer") ||
-    p.includes("antworte") ||
-    p.includes("responder") ||
-    p.includes("écrire")
-  ) {
-    const actionSentence =
-      tasks.length > 0
-        ? `Regarding the action items, we have confirmed: "${tasks[0]}" and assigned our engineering team.`
-        : `We have logged the parameters and updated our records accordingly.`;
-    const deadlineSentence = deadline
-      ? ` We are committed to concluding this by ${deadline}.`
-      : ` You will receive our next update within 24 hours.`;
-
-    return `Subject: Re: ${email.subject}
-
-Dear ${senderName},
-
-Thank you for your message regarding ${email.subject.toLowerCase()}.
-
-We have thoroughly reviewed the notification and cross-referenced it with our local operations log. ${actionSentence}${deadlineSentence}
-
-If you require any supplemental batch manifests or compliance certificates in the interim, please let us know.
-
-Best regards,
-Ulises Pérez
-Quality Control & Operations Lead | OmniDash CoreERP`;
-  }
-
-  // 2. Summary / TLDR
-  if (
-    p.includes("summar") ||
-    p.includes("tldr") ||
-    p.includes("kurz") ||
-    p.includes("bullet") ||
-    p.includes("puntos") ||
-    p.includes("résumé")
-  ) {
-    return `📋 Executive Summary for "${email.subject}":
-
-• Key Context: ${summary}
-• Priority Classification: ${email.aiAnalysis.priority.toUpperCase()}${deadline ? ` (Target: ${deadline})` : ""}
-• Originating Sender: ${email.sender}
-• Direct Commitments:
-${tasks.length > 0 ? tasks.map((t, i) => `  ${i + 1}. ${t}`).join("\n") : "  - No critical operational tasks detected."}
-
-System Recommendation: Process in accordance with standard SLA guidelines.`;
-  }
-
-  // 3. Translation
-  if (
-    p.includes("translat") ||
-    p.includes("deutsch") ||
-    p.includes("german") ||
-    p.includes("span") ||
-    p.includes("espanol") ||
-    p.includes("french") ||
-    p.includes("franz")
-  ) {
-    if (p.includes("deutsch") || p.includes("german")) {
-      return `🇩🇪 Übersetzung & Analyse auf Deutsch:
-
-Betreff: ${email.subject}
-Absender: ${senderName}
-Kernaussage: ${summary}
-
-Identifizierte Aufgaben:
-${tasks.length > 0 ? tasks.map((t) => `• ${t}`).join("\n") : "• Keine offenen Eskalationspunkte."}
-Frist: ${deadline || "Keine Frist angegeben"}
-
-Antwortvorschlag: "Sehr geehrte(r) ${senderName}, vielen Dank für Ihre Mitteilung. Wir haben den Vorgang intern geprüft und leiten die notwendigen Schritte ein."`;
-    }
-    if (p.includes("span") || p.includes("espanol")) {
-      return `🇪🇸 Traducción y Análisis en Español:
-
-Asunto: ${email.subject}
-Remitente: ${senderName}
-Resumen Clave: ${summary}
-
-Tareas Operativas:
-${tasks.length > 0 ? tasks.map((t) => `• ${t}`).join("\n") : "• No hay tareas de bloqueo detectadas."}
-Plazo: ${deadline || "Sin fecha límite inmediata"}
-
-Borrador de respuesta: "Estimado/a ${senderName}, confirmamos la recepción de su comunicado y estamos gestionando la solicitud según los plazos establecidos."`;
-    }
-    return `🌐 Multilingual Translation & Analysis:
-Subject: ${email.subject}
-Sender: ${senderName}
-Summary: ${summary}
-Tasks: ${tasks.join(", ") || "None"}
-Deadline: ${deadline || "N/A"}`;
-  }
-
-  // 4. Action items & next steps
-  if (
-    p.includes("task") ||
-    p.includes("action") ||
-    p.includes("step") ||
-    p.includes("schritt") ||
-    p.includes("todo") ||
-    p.includes("paso")
-  ) {
-    if (tasks.length > 0) {
-      return `🎯 Action Plan & Next Steps:
-
-${tasks.map((t, i) => `${i + 1}. [ ] ${t}`).join("\n")}
-
-Note: Ticking the checkboxes in the ✨ KI-Analyse card above will automatically save your completion state locally in IndexedDB.`;
-    }
-    return `ℹ️ No automated action tasks were flagged for this message.
-Recommended manual step: Acknowledge receipt to ${senderName} or move message to Archive.`;
-  }
-
-  // 5. Default contextual response
-  return `✨ AI Copilot Insights for "${email.subject}":
-
-${summary}
-
-${
-  tasks.length > 0
-    ? `Top priority action: "${tasks[0]}"${deadline ? ` before ${deadline}` : ""}.`
-    : "This record is currently in good standing."
-}
-
-You can ask me to:
-• "Draft reply" to generate a tailored corporate email response.
-• "Summarize in 3 bullets" for executive briefing.
-• "Translate to German" or "Translate to Spanish" for cross-border collaboration.`;
-}
-
 export interface InboxProps {
   t?: (key: string, defaultText?: string) => string;
   onNavigateHome?: () => void;
@@ -163,6 +22,7 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isPullingExtension, setIsPullingExtension] = useState(false);
 
   // Active AI Chat Copilot state (Phase 24)
   const [aiPrompt, setAiPrompt] = useState("");
@@ -341,6 +201,56 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
     }
   }, []);
 
+  const handlePullExtension = useCallback(async () => {
+    let targetExtId: string | null = null;
+    try {
+      targetExtId = localStorage.getItem("omni_ext_id");
+    } catch {
+      // ignore
+    }
+
+    if (!targetExtId || !targetExtId.trim()) {
+      alert("Por favor, configura el ID de la extensión en los Ajustes del Espacio.");
+      return;
+    }
+
+    const chromeObj = typeof window !== "undefined" ? (window as any).chrome : null;
+    if (!chromeObj?.runtime?.sendMessage) {
+      alert("Esta función requiere un navegador basado en Chromium con soporte para extensiones.");
+      return;
+    }
+
+    setIsPullingExtension(true);
+    try {
+      chromeObj.runtime.sendMessage(
+        targetExtId.trim(),
+        { action: "TRIGGER_EXTRACTION" },
+        async (response: any) => {
+          setIsPullingExtension(false);
+          if (chromeObj.runtime.lastError) {
+            console.error("Connection error:", chromeObj.runtime.lastError);
+            alert("Error: Asegúrate de que la extensión está instalada, activa y el ID es correcto.");
+            return;
+          }
+          if (response?.error) {
+            alert(response.error); // E.g., "No Gmail/Outlook tabs open."
+          } else if (response?.success && response.payload) {
+            // Successfully pulled the data remotely!
+            await api.saveEmails([response.payload]);
+            setSelectedFolder("inbox");
+            if (response.payload.id) {
+              setSelectedEmailId(response.payload.id);
+            }
+          }
+        }
+      );
+    } catch (err) {
+      setIsPullingExtension(false);
+      console.error("Connection error:", err);
+      alert("Error: Asegúrate de que la extensión está instalada, activa y el ID es correcto.");
+    }
+  }, []);
+
   const handleResetDemoEmails = useCallback(async () => {
     await api.seedDemoEmails();
     setSelectedFolder("inbox");
@@ -425,6 +335,37 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
               <span>{translate("common.back", "Back")}</span>
             </button>
           )}
+          {/* Phase 32: Remote Extension Pull Trigger Button */}
+          <button
+            type="button"
+            className="primary-button"
+            onClick={handlePullExtension}
+            disabled={isPullingExtension}
+            title="Importar correo desde la pestaña activa mediante la Extensión Chrome"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "var(--primary, #C27358)",
+              color: "#FFFFFF",
+              padding: "7px 13px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: 650,
+              border: "none",
+              cursor: isPullingExtension ? "not-allowed" : "pointer",
+              opacity: isPullingExtension ? 0.7 : 1,
+              boxShadow: "0 2px 6px color-mix(in srgb, var(--primary, #C27358) 35%, transparent)",
+            }}
+          >
+            <span style={{ fontSize: "13px" }}>📥</span>
+            <span>
+              {isPullingExtension
+                ? "Importando..."
+                : translate("common.pullActiveTab", "Importar Pestaña Activa")}
+            </span>
+          </button>
+
           <button
             type="button"
             className="secondary-button"
@@ -762,8 +703,13 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
               <div className="inbox-ai-panel">
                 <div className="inbox-ai-panel-header">
                   <div className="inbox-ai-title-wrap">
-                    <span className="inbox-ai-icon">✨</span>
-                    <h3>{translate("common.aiAnalysisTitle", "KI-Analyse (Local Ollama Engine)")}</h3>
+                    <img
+                      src="/avatar_asistente.png"
+                      alt="Omni"
+                      className="omni-avatar"
+                      style={{ width: "20px", height: "20px" }}
+                    />
+                    <h3>{translate("common.aiAnalysisTitle", "Omni Intelligence (Local Engine)")}</h3>
                   </div>
                   <div className="inbox-ai-badges">
                     <span
@@ -843,10 +789,16 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
                 <div className="mt-8 border-t border-brand-line pt-6">
                   <div className="flex items-center gap-2 mb-4">
                     <h4
-                      className="text-sm font-semibold tracking-wide flex items-center gap-1.5"
+                      className="text-sm font-semibold tracking-wide flex items-center gap-2"
                       style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700 }}
                     >
-                      ✨ Copilot
+                      <img
+                        src="/avatar_asistente.png"
+                        alt="Omni"
+                        className="omni-avatar"
+                        style={{ width: "22px", height: "22px" }}
+                      />
+                      <span>Omni</span>
                     </h4>
                   </div>
 
@@ -899,6 +851,17 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
                                 }
                           }
                         >
+                          {item.role === "ai" && (
+                            <div className="flex items-center gap-1.5 mb-1.5 text-[11px] font-bold opacity-80">
+                              <img
+                                src="/avatar_asistente.png"
+                                alt="Omni"
+                                className="omni-avatar"
+                                style={{ width: "16px", height: "16px" }}
+                              />
+                              <span>Omni</span>
+                            </div>
+                          )}
                           {item.text}
                         </div>
                       </div>
@@ -906,13 +869,20 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
 
                     {isAiTyping && (
                       <div
-                        className="flex justify-start mb-2"
+                        className="flex items-center gap-2 mb-2"
                         style={{
                           display: "flex",
-                          justifyContent: "flex-start",
+                          alignItems: "center",
+                          gap: "8px",
                           marginBottom: "8px",
                         }}
                       >
+                        <img
+                          src="/avatar_asistente.png"
+                          alt="Omni"
+                          className="omni-avatar"
+                          style={{ width: "18px", height: "18px" }}
+                        />
                         <div
                           className="text-xs text-neutral-500 animate-pulse italic"
                           style={{
@@ -921,7 +891,7 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
                             fontStyle: "italic",
                           }}
                         >
-                          Typing...
+                          Omni is thinking...
                         </div>
                       </div>
                     )}
@@ -937,7 +907,7 @@ export function Inbox({ t, onNavigateHome }: InboxProps) {
                       type="text"
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
-                      placeholder={translate("common.askAi", "Ask AI...")}
+                      placeholder={translate("common.askAi", "Ask Omni...")}
                       disabled={isAiTyping}
                       className="flex-1 rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none dark:border-neutral-700 dark:bg-neutral-900"
                       style={{

@@ -275,6 +275,19 @@ export interface LocaleSchema {
     datasets: string;
     emails: string;
     askAi: string;
+    save: string;
+    cancel: string;
+    pullActiveTab: string;
+  };
+  auth: {
+    loginTitle: string;
+    fullName: string;
+    jobTitle: string;
+  };
+  theme: {
+    savePalette: string;
+    paletteName: string;
+    textColor: string;
   };
 }
 
@@ -554,6 +567,19 @@ export const locales: Record<Language, LocaleSchema> = {
       datasets: "Data Records",
       emails: "Emails",
       askAi: "Ask AI...",
+      save: "Save",
+      cancel: "Cancel",
+      pullActiveTab: "Pull Active Tab",
+    },
+    auth: {
+      loginTitle: "Sign In",
+      fullName: "Full Name",
+      jobTitle: "Job Title",
+    },
+    theme: {
+      savePalette: "Save Palette",
+      paletteName: "Palette name...",
+      textColor: "Text Color",
     },
   },
 
@@ -832,6 +858,19 @@ export const locales: Record<Language, LocaleSchema> = {
       datasets: "Registros de Datos",
       emails: "Correos Electrónicos",
       askAi: "Preguntar a la IA...",
+      save: "Guardar",
+      cancel: "Cancelar",
+      pullActiveTab: "Importar Pestaña Activa",
+    },
+    auth: {
+      loginTitle: "Iniciar sesión",
+      fullName: "Nombre completo",
+      jobTitle: "Cargo",
+    },
+    theme: {
+      savePalette: "Guardar Paleta",
+      paletteName: "Nombre de la paleta...",
+      textColor: "Color del texto",
     },
   },
 
@@ -1110,6 +1149,19 @@ export const locales: Record<Language, LocaleSchema> = {
       datasets: "Datensätze",
       emails: "E-Mails",
       askAi: "KI fragen...",
+      save: "Speichern",
+      cancel: "Abbrechen",
+      pullActiveTab: "Aktiven Tab importieren",
+    },
+    auth: {
+      loginTitle: "Anmelden",
+      fullName: "Vollständiger Name",
+      jobTitle: "Position",
+    },
+    theme: {
+      savePalette: "Palette speichern",
+      paletteName: "Palettenname...",
+      textColor: "Textfarbe",
     },
   },
 
@@ -1388,6 +1440,19 @@ export const locales: Record<Language, LocaleSchema> = {
       datasets: "Enregistrements de données",
       emails: "E-mails",
       askAi: "Demander à l'IA...",
+      save: "Enregistrer",
+      cancel: "Annuler",
+      pullActiveTab: "Importer l'onglet actif",
+    },
+    auth: {
+      loginTitle: "Se connecter",
+      fullName: "Nom complet",
+      jobTitle: "Poste",
+    },
+    theme: {
+      savePalette: "Enregistrer la palette",
+      paletteName: "Nom de la palette...",
+      textColor: "Couleur du texte",
     },
   },
 
@@ -1666,6 +1731,19 @@ export const locales: Record<Language, LocaleSchema> = {
       datasets: "Record di dati",
       emails: "Email",
       askAi: "Chiedi all'IA...",
+      save: "Salva",
+      cancel: "Annulla",
+      pullActiveTab: "Importa scheda attiva",
+    },
+    auth: {
+      loginTitle: "Accedi",
+      fullName: "Nome completo",
+      jobTitle: "Posizione",
+    },
+    theme: {
+      savePalette: "Salva tavolozza",
+      paletteName: "Nome della tavolozza...",
+      textColor: "Colore del testo",
     },
   },
 
@@ -1944,6 +2022,19 @@ export const locales: Record<Language, LocaleSchema> = {
       datasets: "数据记录",
       emails: "电子邮件",
       askAi: "询问AI...",
+      save: "保存",
+      cancel: "取消",
+      pullActiveTab: "导入活动标签页",
+    },
+    auth: {
+      loginTitle: "登录",
+      fullName: "姓名",
+      jobTitle: "职位",
+    },
+    theme: {
+      savePalette: "保存调色板",
+      paletteName: "调色板名称...",
+      textColor: "文本颜色",
     },
   },
 
@@ -2222,6 +2313,19 @@ export const locales: Record<Language, LocaleSchema> = {
       datasets: "データレコード",
       emails: "電子メール",
       askAi: "AIに質問...",
+      save: "保存",
+      cancel: "キャンセル",
+      pullActiveTab: "アクティブタブを取込",
+    },
+    auth: {
+      loginTitle: "ログイン",
+      fullName: "氏名",
+      jobTitle: "役職",
+    },
+    theme: {
+      savePalette: "パレットを保存",
+      paletteName: "パレット名...",
+      textColor: "文字色",
     },
   },
 };

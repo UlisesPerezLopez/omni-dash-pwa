@@ -22,6 +22,19 @@ interface TabItem {
   badge?: string;
 }
 
+export interface CustomPaletteItem {
+  id: string;
+  name: string;
+  primary: string;
+  secondary: string;
+  tertiary?: string;
+  accent?: string;
+  surface?: string;
+  bg?: string;
+  line?: string;
+  ink?: string;
+}
+
 export interface StudioProps {
   // Brand & Header
   brandName: string;
@@ -84,7 +97,7 @@ export interface StudioProps {
 
   // General
   onResetDefaults: () => void;
-  t: (key: string) => string;
+  t: (key: string, defaultText?: string) => string;
 }
 
 export function Studio({
@@ -145,6 +158,149 @@ export function Studio({
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [localImportMessage, setLocalImportMessage] = useState<string | null>(null);
   const [isStagingModalOpen, setIsStagingModalOpen] = useState(false);
+  // Custom Theme Palettes (Phase 30)
+  const [customPalettes, setCustomPalettes] = useState<CustomPaletteItem[]>(() => {
+    try {
+      const stored = localStorage.getItem("omnidash_custom_palettes");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [newPaletteName, setNewPaletteName] = useState("");
+  const [activeCustomPaletteId, setActiveCustomPaletteId] = useState<string | null>(null);
+
+  // Chrome Extension Connector ID (Phase 32)
+  const [extId, setExtId] = useState<string>(() => {
+    try {
+      return localStorage.getItem("omni_ext_id") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [isExtIdSaved, setIsExtIdSaved] = useState<boolean>(() => {
+    try {
+      return !!localStorage.getItem("omni_ext_id");
+    } catch {
+      return false;
+    }
+  });
+  const [extSaveFeedback, setExtSaveFeedback] = useState<string | null>(null);
+
+  const handleSaveExtId = () => {
+    const trimmed = extId.trim();
+    try {
+      if (trimmed) {
+        localStorage.setItem("omni_ext_id", trimmed);
+        setIsExtIdSaved(true);
+        setExtSaveFeedback("¡ID vinculado correctamente!");
+      } else {
+        localStorage.removeItem("omni_ext_id");
+        setIsExtIdSaved(false);
+        setExtSaveFeedback("ID desvinculado.");
+      }
+      setTimeout(() => setExtSaveFeedback(null), 3000);
+    } catch (err) {
+      console.error("Failed to save extension ID:", err);
+    }
+  };
+
+  // Typography Text Color Control (Phase 31)
+  const [textColor, setTextColor] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem("omnidash_text_color");
+      if (saved) return saved;
+    } catch {
+      // ignore
+    }
+    if (typeof window !== "undefined") {
+      const computed = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
+      if (computed && computed.startsWith("#")) return computed;
+    }
+    return "#2D2823";
+  });
+
+  const handleTextColorChange = (hex: string) => {
+    setTextColor(hex);
+    if (typeof document !== "undefined") {
+      const root = document.documentElement;
+      root.style.setProperty("--ink", hex);
+      root.style.setProperty("--text-main", hex);
+      root.style.setProperty("--color-text-main", hex);
+      root.style.setProperty("--ink-secondary", `color-mix(in srgb, ${hex} 75%, transparent)`);
+      root.style.setProperty("--muted", `color-mix(in srgb, ${hex} 60%, transparent)`);
+      root.style.setProperty("--faint", `color-mix(in srgb, ${hex} 40%, transparent)`);
+    }
+    try {
+      localStorage.setItem("omnidash_text_color", hex);
+    } catch (e) {
+      console.error("Failed to save text color", e);
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("omnidash_text_color_change", { detail: hex }));
+    }
+  };
+
+  const handleSaveCustomPalette = () => {
+    const trimmed = newPaletteName.trim();
+    if (!trimmed) return;
+
+    const computed = typeof window !== "undefined" ? getComputedStyle(document.documentElement) : null;
+    const currentPrimary = primaryColor || computed?.getPropertyValue("--primary").trim() || "#C27358";
+    const currentSecondary = secondaryColor || computed?.getPropertyValue("--secondary").trim() || "#798C7A";
+    const currentTertiary = tertiaryColor || computed?.getPropertyValue("--tertiary").trim() || "#2B4C59";
+    const currentAccent = accentColor || computed?.getPropertyValue("--accent").trim() || "#D4A373";
+    const currentSurface = surfaceColor || computed?.getPropertyValue("--surface").trim() || "#FFFFFF";
+    const currentBg = canvasColor || computed?.getPropertyValue("--bg").trim() || "#F5F3ED";
+    const currentLine = lineColor || computed?.getPropertyValue("--line").trim() || "#E7E3D9";
+
+    const newPalette: CustomPaletteItem = {
+      id: `pal_${Date.now()}`,
+      name: trimmed,
+      primary: currentPrimary,
+      secondary: currentSecondary,
+      tertiary: currentTertiary,
+      accent: currentAccent,
+      surface: currentSurface,
+      bg: currentBg,
+      line: currentLine,
+      ink: textColor,
+    };
+
+    const updated = [...customPalettes, newPalette];
+    setCustomPalettes(updated);
+    try {
+      localStorage.setItem("omnidash_custom_palettes", JSON.stringify(updated));
+    } catch (e) {
+      console.error("Failed to save custom palette", e);
+    }
+    setNewPaletteName("");
+    setActiveCustomPaletteId(newPalette.id);
+  };
+
+  const handleSelectCustomPalette = (palette: CustomPaletteItem) => {
+    setActiveCustomPaletteId(palette.id);
+    if (palette.primary) onPrimaryColorChange(palette.primary);
+    if (palette.secondary) onSecondaryColorChange(palette.secondary);
+    if (palette.tertiary && onTertiaryColorChange) onTertiaryColorChange(palette.tertiary);
+    if (palette.accent && onAccentColorChange) onAccentColorChange(palette.accent);
+    if (palette.surface && onSurfaceColorChange) onSurfaceColorChange(palette.surface);
+    if (palette.bg && onCanvasColorChange) onCanvasColorChange(palette.bg);
+    if (palette.line && onLineColorChange) onLineColorChange(palette.line);
+    if (palette.ink) handleTextColorChange(palette.ink);
+  };
+
+  const handleDeleteCustomPalette = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const updated = customPalettes.filter((p) => p.id !== id);
+    setCustomPalettes(updated);
+    if (activeCustomPaletteId === id) setActiveCustomPaletteId(null);
+    try {
+      localStorage.setItem("omnidash_custom_palettes", JSON.stringify(updated));
+    } catch (err) {
+      console.error("Failed to update custom palettes", err);
+    }
+  };
 
   const totalRecords = recordsCount + emailsCount;
 
@@ -580,21 +736,129 @@ export function Studio({
                   <button
                     key={item.key}
                     type="button"
-                    className={`radius-chip ${paletteKey === item.key ? "active" : ""}`}
-                    onClick={() => onSelectPalettePreset(item.key)}
+                    className={`radius-chip ${paletteKey === item.key && !activeCustomPaletteId ? "active" : ""}`}
+                    onClick={() => {
+                      setActiveCustomPaletteId(null);
+                      onSelectPalettePreset(item.key);
+                    }}
                   >
                     {item.label}
                   </button>
                 ))}
+
+                {/* Custom User-Saved Palettes */}
+                {customPalettes.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={`radius-chip ${activeCustomPaletteId === item.id ? "active" : ""}`}
+                    onClick={() => handleSelectCustomPalette(item)}
+                    style={{
+                      borderLeft: `4px solid ${item.primary}`,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        background: item.primary,
+                      }}
+                    />
+                    <span>{item.name}</span>
+                    <span
+                      onClick={(e) => handleDeleteCustomPalette(e, item.id)}
+                      title="Eliminar paleta personalizada"
+                      style={{
+                        marginLeft: "4px",
+                        opacity: 0.6,
+                        cursor: "pointer",
+                        fontWeight: "bold",
+                        fontSize: "10px",
+                      }}
+                    >
+                      ✕
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Inline Save Palette and Reset Row */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                  marginTop: "12px",
+                  paddingTop: "12px",
+                  borderTop: "1px solid var(--line, #E7E3D9)",
+                }}
+              >
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                  <input
+                    type="text"
+                    value={newPaletteName}
+                    onChange={(e) => setNewPaletteName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveCustomPalette();
+                      }
+                    }}
+                    placeholder={t("theme.paletteName") || "Nombre de la paleta..."}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--line, #E7E3D9)",
+                      background: "var(--surface, #FFFFFF)",
+                      color: "var(--ink, #2D2823)",
+                      fontSize: "13px",
+                      outline: "none",
+                      width: "180px",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveCustomPalette}
+                    disabled={!newPaletteName.trim()}
+                    className="primary-button compact-button"
+                    style={{
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      background: "var(--primary, #C27358)",
+                      color: "#FFFFFF",
+                      border: "none",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: newPaletteName.trim() ? "pointer" : "not-allowed",
+                      opacity: newPaletteName.trim() ? 1 : 0.6,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                  >
+                    <span>💾 {t("theme.savePalette") || "Guardar Paleta"}</span>
+                  </button>
+                </div>
+
                 <button
                   type="button"
                   className="secondary-button compact-button"
-                  style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: "6px" }}
-                  onClick={() => onSelectPalettePreset("warm")}
-                  title="Reset to default Warm Corporate hex codes"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                  onClick={() => {
+                    setActiveCustomPaletteId(null);
+                    onSelectPalettePreset("warm");
+                  }}
+                  title="Restaurar por Defecto"
                 >
                   <Icon name="refresh" size={13} />
-                  <span>{t("common.reset") || "Reset to Warm Corporate"}</span>
+                  <span>{t("common.reset") || "Restaurar por Defecto"}</span>
                 </button>
               </div>
             </div>
@@ -729,7 +993,25 @@ export function Studio({
               </select>
             </div>
 
-            <div className="typography-preview" style={{ fontFamily: selectedFont, maxWidth: "440px", marginTop: "14px" }}>
+            {/* Text Color Picker */}
+            <div style={{ marginTop: "16px", maxWidth: "440px" }}>
+              <label className="color-picker-item" title={t("theme.textColor") || "Color del texto"}>
+                <div className="color-preview-swatch" style={{ background: textColor, border: "1px solid var(--line)" }}>
+                  <input
+                    type="color"
+                    value={textColor}
+                    onChange={(e) => handleTextColorChange(e.target.value)}
+                    className="color-picker-native"
+                  />
+                </div>
+                <div className="color-picker-info">
+                  <strong>{t("theme.textColor") || "Color del texto"}</strong>
+                  <span className="mono-value">{textColor.toUpperCase()}</span>
+                </div>
+              </label>
+            </div>
+
+            <div className="typography-preview" style={{ fontFamily: selectedFont, maxWidth: "440px", marginTop: "14px", color: textColor }}>
               <strong>Aa Bb Gg 1234567890</strong>
               <span>OmniDash Enterprise OS — Reactive Edge Architecture</span>
               <small style={{ marginTop: "6px", color: "var(--primary)", fontWeight: 700 }}>
@@ -895,6 +1177,114 @@ export function Studio({
                   <Icon name="upload" size={12} />
                   <span>{t("common.advancedImport") || "Open batch file modal"}</span>
                 </button>
+              </div>
+
+              {/* Conector de Extensión Chrome (Phase 32) */}
+              <div
+                className="chrome-extension-connector-card"
+                style={{
+                  marginTop: "16px",
+                  padding: "16px",
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  borderRadius: "var(--radius-card, 12px)",
+                  boxShadow: "var(--card-shadow)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "16px" }}>🔌</span>
+                    <strong style={{ fontSize: "13px", color: "var(--ink)", fontWeight: 700 }}>
+                      Conector de Extensión Chrome
+                    </strong>
+                  </div>
+                  {isExtIdSaved && (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "10px",
+                        fontWeight: 700,
+                        color: "var(--secondary, #798C7A)",
+                        background: "color-mix(in srgb, var(--secondary, #798C7A) 15%, transparent)",
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        border: "1px solid color-mix(in srgb, var(--secondary, #798C7A) 30%, transparent)",
+                      }}
+                    >
+                      ✓ Vinculado
+                    </span>
+                  )}
+                </div>
+                <p style={{ margin: "0 0 12px", fontSize: "11px", color: "var(--muted)", lineHeight: 1.45 }}>
+                  Configura el ID de la extensión OmniDash para activar extracciones remotas y sincronizar correos con un clic.
+                </p>
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <input
+                    type="text"
+                    value={extId}
+                    onChange={(e) => {
+                      setExtId(e.target.value);
+                      setIsExtIdSaved(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleSaveExtId();
+                      }
+                    }}
+                    placeholder="Pega el ID de la extensión (ej. abcdefghijklmnop...)"
+                    style={{
+                      flex: 1,
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--line)",
+                      background: "var(--surface-alt, #EFECE4)",
+                      color: "var(--ink)",
+                      fontSize: "12px",
+                      fontFamily: "monospace",
+                      outline: "none",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveExtId}
+                    className="primary-button compact-button"
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "6px",
+                      background: "var(--primary, #C27358)",
+                      color: "#FFFFFF",
+                      border: "none",
+                      fontSize: "12px",
+                      fontWeight: 650,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                  >
+                    <span>Vincular</span>
+                  </button>
+                </div>
+                {extSaveFeedback && (
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      fontSize: "11px",
+                      color: isExtIdSaved ? "var(--secondary, #798C7A)" : "var(--muted)",
+                      fontWeight: 600,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <span>{isExtIdSaved ? "✓" : "ℹ"}</span>
+                    <span>{extSaveFeedback}</span>
+                  </div>
+                )}
               </div>
 
               {/* Smart Staging Pipeline Action Button */}

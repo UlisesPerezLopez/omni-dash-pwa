@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "./Icons";
 import { LanguageDropdown } from "./LanguageDropdown";
 import { GlobalCopilot } from "./GlobalCopilot";
+import { LoginPopover } from "./LoginModal";
 import { useDashboardData } from "../services/api";
 import type { Language } from "../types";
 
@@ -22,7 +23,7 @@ export interface TopbarProps {
   isStudioOpen: boolean;
   onToggleStudio: () => void;
   onLogout?: () => void;
-  t: (key: string) => string;
+  t: (key: string, defaultText?: string) => string;
   // Optional local fallbacks (for instant optimistic previews before DB commit)
   fallbackBrandName?: string;
   fallbackLogoUrl?: string | null;
@@ -32,13 +33,55 @@ export interface TopbarProps {
   onCloseCopilot?: () => void;
 }
 
+export interface UserProfile {
+  name: string;
+  title: string;
+  initials: string;
+}
+
+function UserIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ display: "block" }}
+    >
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function getInitialsFromName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "UP";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export function UserProfileDropdown({
   t,
   onLogout,
 }: {
-  t: (key: string) => string;
+  t: (key: string, defaultText?: string) => string;
   onLogout?: () => void;
 }) {
+  const [localUser, setLocalUser] = useState<UserProfile | null>(() => {
+    try {
+      const stored = localStorage.getItem("omnidash_user");
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -53,8 +96,70 @@ export function UserProfileDropdown({
     return () => window.removeEventListener("click", handleClickOutside);
   }, [isOpen]);
 
-  const userName = t("common.userName") || "Ulises Pérez";
-  const userRole = t("common.userRole") || "Quality Control / IT Admin";
+  const handleSaveLogin = (name: string, title: string) => {
+    const defaultTitle = t("common.userRole") || "Quality Control / IT Admin";
+    const initials = getInitialsFromName(name);
+
+    const newUser: UserProfile = {
+      name: name.trim(),
+      title: (title || defaultTitle).trim(),
+      initials,
+    };
+
+    try {
+      localStorage.setItem("omnidash_user", JSON.stringify(newUser));
+    } catch (err) {
+      console.error("Failed to save user to localStorage", err);
+    }
+    setLocalUser(newUser);
+    setIsLoginModalOpen(false);
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("omnidash_user");
+    } catch (err) {
+      console.error("Failed to remove user from localStorage", err);
+    }
+    setLocalUser(null);
+    setIsOpen(false);
+    if (onLogout) onLogout();
+  };
+
+  // Logged-out state: show generic standard user icon in gray/neutral circular button
+  if (!localUser) {
+    return (
+      <div className="user-profile-menu-container relative" style={{ position: "relative" }}>
+        <button
+          type="button"
+          className="avatar user-avatar-btn user-avatar-logged-out"
+          onClick={() => setIsLoginModalOpen((prev) => !prev)}
+          title={t("auth.loginTitle", "Iniciar Sesión")}
+          aria-label={t("auth.loginTitle", "Iniciar Sesión")}
+          style={{
+            background: "var(--surface-alt, #EFECE4)",
+            color: "var(--muted, #736B63)",
+            border: "1px solid var(--line, #E7E3D9)",
+            display: "grid",
+            placeItems: "center",
+            cursor: "pointer",
+          }}
+        >
+          <UserIcon size={18} />
+        </button>
+
+        <LoginPopover
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          onLogin={handleSaveLogin}
+          initialName={t("common.userName") || "Ulises Pérez"}
+          initialTitle={t("common.userRole") || "Quality Control / IT Admin"}
+          t={t}
+        />
+      </div>
+    );
+  }
+
   const logoutText = t("common.logout") || "Log out";
 
   return (
@@ -65,18 +170,18 @@ export function UserProfileDropdown({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        title={`${userName} — ${userRole}`}
+        title={`${localUser.name} — ${localUser.title}`}
       >
-        UP
+        {localUser.initials}
       </button>
 
       {isOpen && (
         <div className="user-profile-dropdown" role="menu">
           <div className="user-profile-header">
-            <div className="user-profile-avatar-large">UP</div>
+            <div className="user-profile-avatar-large">{localUser.initials}</div>
             <div className="user-profile-details">
-              <strong>{userName}</strong>
-              <small>{userRole}</small>
+              <strong>{localUser.name}</strong>
+              <small>{localUser.title}</small>
               <span className="user-profile-status-badge">
                 <span className="status-dot healthy" /> System Verified
               </span>
@@ -87,10 +192,7 @@ export function UserProfileDropdown({
             type="button"
             className="user-profile-item logout-item"
             role="menuitem"
-            onClick={() => {
-              setIsOpen(false);
-              if (onLogout) onLogout();
-            }}
+            onClick={handleLogout}
           >
             <Icon name="close" size={13} />
             <span>{logoutText}</span>
@@ -262,17 +364,17 @@ export function Topbar({
           <Icon name="settings" size={17} />
         </button>
 
-        {/* Distinct Global AI Copilot Pill Trigger */}
+        {/* Distinct Global Omni AI Pill Trigger */}
         <button
           type="button"
           className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-info/10 text-brand-info font-medium border border-brand-info/20 hover:bg-brand-info/20 transition-colors global-copilot-pill-btn"
-          title="Open Enterprise AI Copilot"
-          aria-label="Open Enterprise AI Copilot"
+          title="Open Omni AI"
+          aria-label="Open Omni AI"
           onClick={() => setIsCopilotOpen(true)}
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "6px",
+            gap: "7px",
             padding: "5px 12px",
             borderRadius: "9999px",
             background: "color-mix(in srgb, var(--primary) 12%, var(--surface))",
@@ -285,8 +387,13 @@ export function Topbar({
             boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
           }}
         >
-          <span style={{ fontSize: "13px" }}>✨</span>
-          <span>Copilot</span>
+          <img
+            src="/avatar_asistente.png"
+            alt="Omni"
+            className="omni-avatar"
+            style={{ width: "20px", height: "20px" }}
+          />
+          <span>Omni</span>
         </button>
 
         <UserProfileDropdown t={t} onLogout={onLogout} />
@@ -294,7 +401,7 @@ export function Topbar({
 
       {/* Fallback Global Drawer if not handled at root layout */}
       {!onOpenCopilot && (
-        <GlobalCopilot isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} />
+        <GlobalCopilot isOpen={isCopilotOpen} onClose={() => setIsCopilotOpen(false)} language={language} />
       )}
     </header>
   );

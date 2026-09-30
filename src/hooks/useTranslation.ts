@@ -26,9 +26,11 @@ export function useTranslation(initialLang?: Language) {
   return {
     t,
     language: activeLang,
+    currentLanguage: activeLang,
     setLanguage: setCurrentLanguage,
     languages,
   };
 }
 
+export { useLanguage } from "./useLanguage";
 export { getTranslator, flatLocales, locales };
