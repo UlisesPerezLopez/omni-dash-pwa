@@ -193,11 +193,11 @@ export function Studio({
       if (trimmed) {
         localStorage.setItem("omni_ext_id", trimmed);
         setIsExtIdSaved(true);
-        setExtSaveFeedback("¡ID vinculado correctamente!");
+        setExtSaveFeedback(t("studio.ingest.linked") || "Vinculado");
       } else {
         localStorage.removeItem("omni_ext_id");
         setIsExtIdSaved(false);
-        setExtSaveFeedback("ID desvinculado.");
+        setExtSaveFeedback("");
       }
       setTimeout(() => setExtSaveFeedback(null), 3000);
     } catch (err) {
@@ -1118,7 +1118,7 @@ export function Studio({
               <div>
                 <h2>{t("studio.tabs.ingestion") || "Ingestion Studio & Smart Inbox"}</h2>
                 <p>
-                  Import your JSON datasets, emails, or business spreadsheets directly into offline Dexie IndexedDB.
+                  {t("studio.ingest.desc") || "Import your JSON datasets, emails, or business spreadsheets directly into offline Dexie IndexedDB."}
                 </p>
               </div>
             </div>
@@ -1162,7 +1162,7 @@ export function Studio({
                     ? "Reading and parsing file contents locally..."
                     : isDragging
                     ? "Drop file to ingest into Dexie now!"
-                    : "Drag & drop .json, .csv, or spreadsheets here, or click to browse"}
+                    : (t("studio.ingest.dragDrop") || "Drag & drop .json, .csv, or spreadsheets here, or click to browse")}
                 </small>
               </div>
 
@@ -1175,7 +1175,7 @@ export function Studio({
                   title="Open batch modal importer"
                 >
                   <Icon name="upload" size={12} />
-                  <span>{t("common.advancedImport") || "Open batch file modal"}</span>
+                  <span>{t("studio.ingest.advancedOpts") || t("common.advancedImport") || "Open batch file modal"}</span>
                 </button>
               </div>
 
@@ -1195,7 +1195,7 @@ export function Studio({
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <span style={{ fontSize: "16px" }}>🔌</span>
                     <strong style={{ fontSize: "13px", color: "var(--ink)", fontWeight: 700 }}>
-                      Conector de Extensión Chrome
+                      {t("studio.ingest.extConnectorTitle") || "Conector de Extensión Chrome"}
                     </strong>
                   </div>
                   {isExtIdSaved && (
@@ -1213,12 +1213,12 @@ export function Studio({
                         border: "1px solid color-mix(in srgb, var(--secondary, #798C7A) 30%, transparent)",
                       }}
                     >
-                      ✓ Vinculado
+                      ✓ {t("studio.ingest.linked") || "Vinculado"}
                     </span>
                   )}
                 </div>
                 <p style={{ margin: "0 0 12px", fontSize: "11px", color: "var(--muted)", lineHeight: 1.45 }}>
-                  Configura el ID de la extensión OmniDash para activar extracciones remotas y sincronizar correos con un clic.
+                  {t("studio.ingest.extConnectorDesc") || "Configura el ID de la extensión OmniDash para activar extracciones remotas y sincronizar correos con un clic."}
                 </p>
                 <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                   <input
@@ -1234,7 +1234,7 @@ export function Studio({
                         handleSaveExtId();
                       }
                     }}
-                    placeholder="Pega el ID de la extensión (ej. abcdefghijklmnop...)"
+                    placeholder={t("studio.ingest.extIdPlaceholder") || "Pega el ID de la extensión (ej. abcdefghijklmnop...)"}
                     style={{
                       flex: 1,
                       padding: "8px 12px",
@@ -1266,7 +1266,7 @@ export function Studio({
                       gap: "5px",
                     }}
                   >
-                    <span>Vincular</span>
+                    <span>{t("studio.ingest.linkBtn") || "Vincular"}</span>
                   </button>
                 </div>
                 {extSaveFeedback && (
@@ -1361,7 +1361,7 @@ export function Studio({
                     {totalRecords.toLocaleString()}
                   </strong>
                   <span style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 600 }}>
-                    {t("records") || "total records"}
+                    {t("studio.ingest.recordsSaved") || "Records saved"}
                   </span>
                 </div>
                 <div

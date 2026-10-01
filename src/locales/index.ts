@@ -151,6 +151,17 @@ export interface LocaleSchema {
     backupSnapshot: string;
     settings: string;
     source: string;
+    ingest: {
+      desc: string;
+      dragDrop: string;
+      advancedOpts: string;
+      extConnectorTitle: string;
+      extConnectorDesc: string;
+      extIdPlaceholder: string;
+      linkBtn: string;
+      linked: string;
+      recordsSaved: string;
+    };
   };
   eyebrows: {
     liveTrend: string;
@@ -443,6 +454,17 @@ export const locales: Record<Language, LocaleSchema> = {
       backupSnapshot: "Backup",
       settings: "Workspace settings",
       source: "Source",
+      ingest: {
+        desc: "Import your JSON datasets, emails, or business spreadsheets directly into offline Dexie IndexedDB.",
+        dragDrop: "Drag & drop .json, .csv, or spreadsheets here, or click to browse",
+        advancedOpts: "Advanced import options",
+        extConnectorTitle: "Chrome Extension Connector",
+        extConnectorDesc: "Configure the OmniDash extension ID to enable remote extractions and sync emails with a single click.",
+        extIdPlaceholder: "Paste extension ID (e.g. abcdefghijklmnop...)",
+        linkBtn: "Link",
+        linked: "Linked",
+        recordsSaved: "records saved",
+      },
     },
     eyebrows: {
       liveTrend: "LIVE TREND / 32 DAYS",
@@ -734,6 +756,17 @@ export const locales: Record<Language, LocaleSchema> = {
       backupSnapshot: "Respaldar",
       settings: "Ajustes del espacio",
       source: "Origen",
+      ingest: {
+        desc: "Importe sus conjuntos de datos JSON, correos electrónicos u hojas de cálculo directamente en la base de datos local Dexie IndexedDB.",
+        dragDrop: "Arrastre y suelte archivos .json, .csv o tablas aquí, o haga clic para explorar",
+        advancedOpts: "Opciones avanzadas de importación",
+        extConnectorTitle: "Conector de Extensión Chrome",
+        extConnectorDesc: "Configura el ID de la extensión OmniDash para activar extracciones remotas y sincronizar correos con un clic.",
+        extIdPlaceholder: "Pega el ID de la extensión (ej. abcdefghijklmnop...)",
+        linkBtn: "Vincular",
+        linked: "Vinculado",
+        recordsSaved: "registros guardados",
+      },
     },
     eyebrows: {
       liveTrend: "TENDENCIA EN VIVO / 32 DÍAS",
@@ -1025,6 +1058,17 @@ export const locales: Record<Language, LocaleSchema> = {
       backupSnapshot: "Sichern",
       settings: "Arbeitsbereich",
       source: "Quelle",
+      ingest: {
+        desc: "Importieren Sie Ihre JSON-Datensätze, E-Mails oder Geschäftstabellen direkt in die lokale Dexie IndexedDB.",
+        dragDrop: "Ziehen Sie .json, .csv oder Tabellenkalkulationen hierher oder klicken Sie zum Durchsuchen",
+        advancedOpts: "Erweiterte Importoptionen",
+        extConnectorTitle: "Chrome-Erweiterungs-Connector",
+        extConnectorDesc: "Konfigurieren Sie die ID der OmniDash-Erweiterung, um Remote-Extraktionen zu aktivieren und E-Mails mit einem Klick zu synchronisieren.",
+        extIdPlaceholder: "Fügen Sie die Erweiterungs-ID ein (z. B. abcdefghijklmnop...)",
+        linkBtn: "Verknüpfen",
+        linked: "Verknüpft",
+        recordsSaved: "Datensätze gespeichert",
+      },
     },
     eyebrows: {
       liveTrend: "LIVE-TREND / 32 TAGE",
@@ -1316,6 +1360,17 @@ export const locales: Record<Language, LocaleSchema> = {
       backupSnapshot: "Sauvegarder",
       settings: "Réglages de l'espace",
       source: "Source",
+      ingest: {
+        desc: "Importez vos jeux de données JSON, e-mails ou feuilles de calcul directement dans Dexie IndexedDB local.",
+        dragDrop: "Glissez-déposez des fichiers .json, .csv ou feuilles de calcul ici, ou cliquez pour parcourir",
+        advancedOpts: "Options d'importation avancées",
+        extConnectorTitle: "Connecteur d'extension Chrome",
+        extConnectorDesc: "Configurez l'ID de l'extension OmniDash pour activer les extractions à distance et synchroniser les e-mails en un clic.",
+        extIdPlaceholder: "Collez l'ID de l'extension (ex. abcdefghijklmnop...)",
+        linkBtn: "Lier",
+        linked: "Lié",
+        recordsSaved: "enregistrements enregistrés",
+      },
     },
     eyebrows: {
       liveTrend: "TENDANCE EN DIRECT / 32 JOURS",
@@ -1607,6 +1662,17 @@ export const locales: Record<Language, LocaleSchema> = {
       backupSnapshot: "Salva",
       settings: "Impostazioni spazio",
       source: "Fonte",
+      ingest: {
+        desc: "Importa i tuoi set di dati JSON, email o fogli di calcolo direttamente nel database locale Dexie IndexedDB.",
+        dragDrop: "Trascina qui file .json, .csv o fogli di calcolo, oppure fai clic per sfogliare",
+        advancedOpts: "Opzioni di importazione avanzate",
+        extConnectorTitle: "Connettore estensione Chrome",
+        extConnectorDesc: "Configura l'ID dell'estensione OmniDash per abilitare estrazioni remote e sincronizzare le email con un clic.",
+        extIdPlaceholder: "Incolla l'ID dell'estensione (es. abcdefghijklmnop...)",
+        linkBtn: "Collega",
+        linked: "Collegato",
+        recordsSaved: "record salvati",
+      },
     },
     eyebrows: {
       liveTrend: "TREND IN TEMPO REALE / 32 GIORNI",
@@ -1898,6 +1964,17 @@ export const locales: Record<Language, LocaleSchema> = {
       backupSnapshot: "导出备份快照",
       settings: "工作区设置",
       source: "来源",
+      ingest: {
+        desc: "将您的JSON数据集、电子邮件或业务电子表格直接导入本地Dexie IndexedDB。",
+        dragDrop: "拖放 .json、.csv 或电子表格至此处，或点击浏览",
+        advancedOpts: "高级导入选项",
+        extConnectorTitle: "Chrome扩展连接器",
+        extConnectorDesc: "配置OmniDash扩展程序ID以启用远程提取并一键同步电子邮件。",
+        extIdPlaceholder: "粘贴扩展程序ID（例如 abcdefghijklmnop...）",
+        linkBtn: "绑定",
+        linked: "已绑定",
+        recordsSaved: "条已保存记录",
+      },
     },
     eyebrows: {
       liveTrend: "实时趋势 / 32 天",
@@ -2189,6 +2266,17 @@ export const locales: Record<Language, LocaleSchema> = {
       backupSnapshot: "設定をバックアップ",
       settings: "ワークスペース設定",
       source: "ソース",
+      ingest: {
+        desc: "JSONデータセット、電子メール、または業務スプレッドシートをローカルのDexie IndexedDBに直接インポートします。",
+        dragDrop: ".json、.csv、またはスプレッドシートをここにドラッグ＆ドロップするか、クリックして参照",
+        advancedOpts: "高度なインポート設定",
+        extConnectorTitle: "Chrome拡張コネクタ",
+        extConnectorDesc: "OmniDash拡張機能IDを設定して、リモート抽出を有効化し、ワンクリックでメールを同期します。",
+        extIdPlaceholder: "拡張機能IDを貼り付け（例：abcdefghijklmnop...）",
+        linkBtn: "連携",
+        linked: "連携済み",
+        recordsSaved: "件の保存済みレコード",
+      },
     },
     eyebrows: {
       liveTrend: "リアルトレンド / 32日間",
