@@ -161,6 +161,8 @@ export interface LocaleSchema {
       linkBtn: string;
       linked: string;
       recordsSaved: string;
+      pending: string;
+      recordsSavedSmall: string;
     };
   };
   eyebrows: {
@@ -464,6 +466,8 @@ export const locales: Record<Language, LocaleSchema> = {
         linkBtn: "Link",
         linked: "Linked",
         recordsSaved: "records saved",
+        pending: "PENDING",
+        recordsSavedSmall: "Records saved",
       },
     },
     eyebrows: {
@@ -766,6 +770,8 @@ export const locales: Record<Language, LocaleSchema> = {
         linkBtn: "Vincular",
         linked: "Vinculado",
         recordsSaved: "registros guardados",
+        pending: "PENDIENTE",
+        recordsSavedSmall: "Registros guardados",
       },
     },
     eyebrows: {
@@ -1068,6 +1074,8 @@ export const locales: Record<Language, LocaleSchema> = {
         linkBtn: "Verknüpfen",
         linked: "Verknüpft",
         recordsSaved: "Datensätze gespeichert",
+        pending: "AUSSTEHEND",
+        recordsSavedSmall: "Datensätze gespeichert",
       },
     },
     eyebrows: {
@@ -1370,6 +1378,8 @@ export const locales: Record<Language, LocaleSchema> = {
         linkBtn: "Lier",
         linked: "Lié",
         recordsSaved: "enregistrements enregistrés",
+        pending: "EN ATTENTE",
+        recordsSavedSmall: "Enregistrements enregistrés",
       },
     },
     eyebrows: {
@@ -1672,6 +1682,8 @@ export const locales: Record<Language, LocaleSchema> = {
         linkBtn: "Collega",
         linked: "Collegato",
         recordsSaved: "record salvati",
+        pending: "IN SOSPESO",
+        recordsSavedSmall: "Record salvati",
       },
     },
     eyebrows: {
@@ -1974,6 +1986,8 @@ export const locales: Record<Language, LocaleSchema> = {
         linkBtn: "绑定",
         linked: "已绑定",
         recordsSaved: "条已保存记录",
+        pending: "待处理",
+        recordsSavedSmall: "条已保存记录",
       },
     },
     eyebrows: {
@@ -2276,6 +2290,8 @@ export const locales: Record<Language, LocaleSchema> = {
         linkBtn: "連携",
         linked: "連携済み",
         recordsSaved: "件の保存済みレコード",
+        pending: "保留中",
+        recordsSavedSmall: "件の保存済みレコード",
       },
     },
     eyebrows: {

@@ -1303,7 +1303,7 @@ export function Studio({
                   {pendingStagingCount > 0 ? (
                     <Pill label={`${pendingStagingCount} ${t("status.pending") || "pending"}`} tone="warn" />
                   ) : (
-                    <span className="inbox-task-done-badge" style={{ marginLeft: "6px" }}>0 Pending</span>
+                    <span className="inbox-task-done-badge" style={{ marginLeft: "6px" }}>0 {t("studio.ingest.pending") || "PENDING"}</span>
                   )}
                 </button>
               </div>
@@ -1361,7 +1361,7 @@ export function Studio({
                     {totalRecords.toLocaleString()}
                   </strong>
                   <span style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 600 }}>
-                    {t("studio.ingest.recordsSaved") || "Records saved"}
+                    {t("studio.ingest.recordsSavedSmall") || t("studio.ingest.recordsSaved") || "Records saved"}
                   </span>
                 </div>
                 <div
@@ -1418,7 +1418,7 @@ export function Studio({
                       type="button"
                       className="icon-button"
                       onClick={() => setIsStagingModalOpen(false)}
-                      title="Close staging view"
+                      title={t("actions.close") || "Close staging view"}
                     >
                       <Icon name="close" size={14} />
                     </button>
@@ -1451,7 +1451,7 @@ export function Studio({
                       className="primary-button"
                       onClick={() => setIsStagingModalOpen(false)}
                     >
-                      <span>Close</span>
+                      <span>{t("actions.close") || "Close"}</span>
                     </button>
                   </div>
                 </div>
