@@ -113,7 +113,7 @@ export function StagingInbox({
                 {translate("staging.empty", "Staging Inbox Clean")}
               </h3>
               <p className="text-xs text-[var(--muted)] max-w-sm mx-auto">
-                {translate("staging.cleanDesc", "No files are waiting for verification. When new data is ingested, it will appear here for validation.")}
+                {translate("studio.ingest.stagingEmptyDesc", translate("staging.cleanDesc", "No files are waiting for verification. When new data is ingested, it will appear here for validation."))}
               </p>
             </div>
           ) : (

@@ -163,6 +163,7 @@ export interface LocaleSchema {
       recordsSaved: string;
       pending: string;
       recordsSavedSmall: string;
+      stagingEmptyDesc: string;
     };
   };
   eyebrows: {
@@ -468,6 +469,7 @@ export const locales: Record<Language, LocaleSchema> = {
         recordsSaved: "records saved",
         pending: "PENDING",
         recordsSavedSmall: "Records saved",
+        stagingEmptyDesc: "No files are waiting for verification. When new data is ingested, it will appear here for validation.",
       },
     },
     eyebrows: {
@@ -772,6 +774,7 @@ export const locales: Record<Language, LocaleSchema> = {
         recordsSaved: "registros guardados",
         pending: "PENDIENTE",
         recordsSavedSmall: "Registros guardados",
+        stagingEmptyDesc: "No hay archivos esperando verificación. Cuando se ingesten nuevos datos, aparecerán aquí para su validación.",
       },
     },
     eyebrows: {
@@ -1076,6 +1079,7 @@ export const locales: Record<Language, LocaleSchema> = {
         recordsSaved: "Datensätze gespeichert",
         pending: "AUSSTEHEND",
         recordsSavedSmall: "Datensätze gespeichert",
+        stagingEmptyDesc: "Es warten keine Dateien auf die Überprüfung. Neu importierte Daten werden hier zur Validierung angezeigt.",
       },
     },
     eyebrows: {
@@ -1380,6 +1384,7 @@ export const locales: Record<Language, LocaleSchema> = {
         recordsSaved: "enregistrements enregistrés",
         pending: "EN ATTENTE",
         recordsSavedSmall: "Enregistrements enregistrés",
+        stagingEmptyDesc: "Aucun fichier en attente de vérification. Lorsque de nouvelles données sont ingérées, elles apparaîtront ici pour validation.",
       },
     },
     eyebrows: {
@@ -1684,6 +1689,7 @@ export const locales: Record<Language, LocaleSchema> = {
         recordsSaved: "record salvati",
         pending: "IN SOSPESO",
         recordsSavedSmall: "Record salvati",
+        stagingEmptyDesc: "Nessun file in attesa di verifica. Quando vengono acquisiti nuovi dati, appariranno qui per la convalida.",
       },
     },
     eyebrows: {
@@ -1988,6 +1994,7 @@ export const locales: Record<Language, LocaleSchema> = {
         recordsSaved: "条已保存记录",
         pending: "待处理",
         recordsSavedSmall: "条已保存记录",
+        stagingEmptyDesc: "没有等待验证的文件。导入新数据后，将在此处显示以供验证。",
       },
     },
     eyebrows: {
@@ -2292,6 +2299,7 @@ export const locales: Record<Language, LocaleSchema> = {
         recordsSaved: "件の保存済みレコード",
         pending: "保留中",
         recordsSavedSmall: "件の保存済みレコード",
+        stagingEmptyDesc: "検証待ちのファイルはありません。新しいデータがインポートされると、検証のためにここに表示されます。",
       },
     },
     eyebrows: {

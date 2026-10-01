@@ -1427,7 +1427,7 @@ export function Studio({
                   <p style={{ fontSize: "12px", color: "var(--muted)", lineHeight: 1.5, margin: "0 0 16px" }}>
                     {pendingStagingCount > 0
                       ? `${pendingStagingCount} incoming dataset batches are staged and waiting for confidence verification before merging into live telemetry.`
-                      : "Staging pipeline is completely clean. When external documents or unverified batches are uploaded, they queue here for automated confidence categorization."}
+                      : (t("studio.ingest.stagingEmptyDesc") || "No files are waiting for verification. When new data is ingested, it will appear here for validation.")}
                   </p>
 
                   <div style={{ padding: "14px", background: "var(--surface-alt)", borderRadius: "8px", border: "1px solid var(--line)", fontSize: "11px", color: "var(--text-main)" }}>
